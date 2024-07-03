@@ -71,8 +71,6 @@ module Fluent::Plugin
       raise "group_bucket_limit must be > 0" \
         unless @group_bucket_limit > 0
 
-      @group_rate_limit = (@group_bucket_limit / @group_bucket_period_s)
-
       raise "group_warning_delay_s must be >= 1" \
         unless @group_warning_delay_s >= 1
 
@@ -120,7 +118,8 @@ module Fluent::Plugin
       # Ruby hashes are ordered by insertion.
       # Deleting and inserting moves the item to the end of the hash (most recently used)
       counter = @counters[group] = @counters.delete(group) || Group.new(0, now, 0, 0, now, nil)
-
+      current_group_bucket_limit = @quota.find { |q| q["group"] = group} || @group_bucket_limit
+      current_group_rate_limit = (current_group_bucket_limit / @group_bucket_period_s)
       counter.rate_count += 1
       since_last_rate_reset = now - counter.rate_last_reset
       if since_last_rate_reset >= 1
@@ -137,13 +136,13 @@ module Fluent::Plugin
       end
 
       if (now.to_i / @group_bucket_period_s) \
-          > (counter.bucket_last_reset.to_i / @group_bucket_period_s)
+          > (counter.bucket_last_reset.to_i / current_group_bucket_limit)
         # next time period reached.
 
         # wait until rate drops back down (if enabled).
-        if counter.bucket_count == -1 and @group_rate_limit != -1
-          if counter.aprox_rate < @group_rate_limit
-            log_rate_back_down(now, group, counter)
+        if counter.bucket_count == -1 and current_group_rate_limit != -1
+          if counter.aprox_rate < current_group_rate_limit
+            log_rate_back_down(now, group, counter, tag, time)
           else
             log_rate_limit_exceeded(now, group, counter, tag, time, record)
             return nil
@@ -164,7 +163,7 @@ module Fluent::Plugin
       counter.bucket_count += 1
 
       # if we are out of credit, we drop logs for the rest of the time period.
-      if counter.bucket_count > @group_bucket_limit
+      if counter.bucket_count > current_group_bucket_limit
         counter.bucket_count = -1
         log_rate_limit_exceeded(now, group, counter, tag, time, record)
         return nil
@@ -214,7 +213,7 @@ module Fluent::Plugin
       log.info("rate back down", cooldown_info)
     end
 
-    def log_items(now, group, counter)
+    def log_items(now, group, counter, bucket_limit, rate_limit)
       since_last_reset = now - counter.bucket_last_reset
       rate = since_last_reset > 0 ? (counter.bucket_count / since_last_reset).round : Float::INFINITY
       aprox_rate = counter.aprox_rate
@@ -223,8 +222,8 @@ module Fluent::Plugin
       {'group_key': group,
        'rate_s': rate,
        'period_s': @group_bucket_period_s,
-       'limit': @group_bucket_limit,
-       'rate_limit_s': @group_rate_limit}
+       'limit': bucket_limit,
+       'rate_limit_s': rate_limit}
     end
 
     def get_counter(name, docstring)
