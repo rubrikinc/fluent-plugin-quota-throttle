@@ -92,6 +92,8 @@ module Fluent::Plugin
       @quota = nil
       @quota = YAML.load(@quota_file)['quotas'] \
         if @quota_file != nil
+
+      @secondary_tag_prefix = "secondary"
     end
 
     def start
@@ -140,8 +142,7 @@ module Fluent::Plugin
           if counter.aprox_rate < @group_rate_limit
             log_rate_back_down(now, group, counter)
           else
-            log_rate_limit_exceeded(now, group, counter)
-            return rate_limit_exceeded
+            return log_rate_limit_exceeded(now, group, counter, tag, time, record)
           end
         end
 
@@ -151,8 +152,7 @@ module Fluent::Plugin
       else
         # if current time period credit is exhausted, drop the record.
         if counter.bucket_count == -1
-          log_rate_limit_exceeded(now, group, counter)
-          return rate_limit_exceeded
+          return log_rate_limit_exceeded(now, group, counter, tag, time, record)
         end
       end
 
@@ -160,9 +160,8 @@ module Fluent::Plugin
 
       # if we are out of credit, we drop logs for the rest of the time period.
       if counter.bucket_count > @group_bucket_limit
-        log_rate_limit_exceeded(now, group, counter)
         counter.bucket_count = -1
-        return rate_limit_exceeded
+        return log_rate_limit_exceeded(now, group, counter, tag, time, record)
       end
 
       record
@@ -176,7 +175,7 @@ module Fluent::Plugin
       end
     end
 
-    def log_rate_limit_exceeded(now, group, counter)
+    def log_rate_limit_exceeded(now, group, counter, tag, time, record)
       # Check if metrics are enabled
       if @enable_metrics
         # We create the new hash of label to label values for the metric
@@ -191,6 +190,13 @@ module Fluent::Plugin
       if emit
         log.warn("rate exceeded", log_items(now, group, counter))
         counter.last_warning = now
+      end
+
+      if @group_drop_logs
+        return nil
+      else
+        new_tag = @secondary_tag_prefix + "." + tag
+        router.emit(new_tag, time, record)
       end
     end
 
