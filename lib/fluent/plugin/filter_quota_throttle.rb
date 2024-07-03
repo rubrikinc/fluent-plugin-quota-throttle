@@ -94,6 +94,10 @@ module Fluent::Plugin
         if @quota_file != nil
 
       @secondary_tag_prefix = "secondary"
+
+      @breach_tag_prefix = "breach"
+
+      @cooldown_tag_prefix = "cooldown"
     end
 
     def start
@@ -111,7 +115,6 @@ module Fluent::Plugin
 
     def filter(tag, time, record)
       now = Time.now
-      rate_limit_exceeded = @group_drop_logs ? nil : record # return nil on rate_limit_exceeded to drop the record
       group = extract_group(record)
 
       # Ruby hashes are ordered by insertion.
@@ -142,7 +145,8 @@ module Fluent::Plugin
           if counter.aprox_rate < @group_rate_limit
             log_rate_back_down(now, group, counter)
           else
-            return log_rate_limit_exceeded(now, group, counter, tag, time, record)
+            log_rate_limit_exceeded(now, group, counter, tag, time, record)
+            return nil
           end
         end
 
@@ -152,7 +156,8 @@ module Fluent::Plugin
       else
         # if current time period credit is exhausted, drop the record.
         if counter.bucket_count == -1
-          return log_rate_limit_exceeded(now, group, counter, tag, time, record)
+          log_rate_limit_exceeded(now, group, counter, tag, time, record)
+          return nil
         end
       end
 
@@ -161,7 +166,8 @@ module Fluent::Plugin
       # if we are out of credit, we drop logs for the rest of the time period.
       if counter.bucket_count > @group_bucket_limit
         counter.bucket_count = -1
-        return log_rate_limit_exceeded(now, group, counter, tag, time, record)
+        log_rate_limit_exceeded(now, group, counter, tag, time, record)
+        return nil
       end
 
       record
@@ -188,20 +194,24 @@ module Fluent::Plugin
       emit = counter.last_warning == nil ? true \
         : (now - counter.last_warning) >= @group_warning_delay_s
       if emit
-        log.warn("rate exceeded", log_items(now, group, counter))
+        new_tag = breach+"."+tag
+        breach_info = log_items(now, group, counter)
+        router.emit(new_tag, time, breach_info)
+        log.warn("rate exceeded", breach_info)
         counter.last_warning = now
       end
 
-      if @group_drop_logs
-        return nil
-      else
+      if not @group_drop_logs
         new_tag = @secondary_tag_prefix + "." + tag
         router.emit(new_tag, time, record)
       end
     end
 
-    def log_rate_back_down(now, group, counter)
-      log.info("rate back down", log_items(now, group, counter))
+    def log_rate_back_down(now, group, counter, tag, time)
+      new_tag = @cooldown_tag_prefix + "." + tag
+      cooldown_info = log_items(now, group, counter)
+      router.emit(new_tag, time, cooldown_info)
+      log.info("rate back down", cooldown_info)
     end
 
     def log_items(now, group, counter)
