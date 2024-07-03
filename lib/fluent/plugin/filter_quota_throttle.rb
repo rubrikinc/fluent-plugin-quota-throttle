@@ -112,14 +112,24 @@ module Fluent::Plugin
     end
 
     def filter(tag, time, record)
+      # Returns record if quota is available, else returns nil. Based on config either record is remited with new tag else nothing is done
       now = Time.now
       group = extract_group(record)
 
       # Ruby hashes are ordered by insertion.
       # Deleting and inserting moves the item to the end of the hash (most recently used)
       counter = @counters[group] = @counters.delete(group) || Group.new(0, now, 0, 0, now, nil)
-      current_group_bucket_limit = @quota.find { |q| q["group"] = group} || @group_bucket_limit
+
+      # Check if quota is defined
+      unless @quota.nil?
+        current_group_bucket_limit = @quota.find { |q| q["group"] = group} || @group_bucket_limit
+      else
+        current_group_bucket_limit = @group_bucket_limit
+      end
+
+      # Allowed group rate limit
       current_group_rate_limit = (current_group_bucket_limit / @group_bucket_period_s)
+
       counter.rate_count += 1
       since_last_rate_reset = now - counter.rate_last_reset
       if since_last_rate_reset >= 1
@@ -193,6 +203,7 @@ module Fluent::Plugin
       emit = counter.last_warning == nil ? true \
         : (now - counter.last_warning) >= @group_warning_delay_s
       if emit
+        # Emit breach event with added prefix to tag
         new_tag = breach+"."+tag
         breach_info = log_items(now, group, counter)
         router.emit(new_tag, time, breach_info)
@@ -201,12 +212,14 @@ module Fluent::Plugin
       end
 
       if not @group_drop_logs
+        # Emit secondary event(actual record) with added prefix to tag
         new_tag = @secondary_tag_prefix + "." + tag
         router.emit(new_tag, time, record)
       end
     end
 
     def log_rate_back_down(now, group, counter, tag, time)
+      # Emit cooldown event with added prefix to tag
       new_tag = @cooldown_tag_prefix + "." + tag
       cooldown_info = log_items(now, group, counter)
       router.emit(new_tag, time, cooldown_info)
