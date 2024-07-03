@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require 'fluent/plugin/filter'
 require 'fluent/plugin/prometheus'
+require 'yaml'
 
 module Fluent::Plugin
   class QuotaThrottleFilter < Filter
@@ -9,6 +10,9 @@ module Fluent::Plugin
     include Fluent::Plugin::Prometheus
     helpers :event_emitter
     attr_reader :registry
+
+    desc "Quota config file path for quota throttling"
+    config_param :quota_config_path, :string, :default => nil
 
     desc "Used to group logs. Groups are rate limited independently"
     config_param :group_key, :array, :default => ['kubernetes.container_name']
@@ -98,6 +102,10 @@ module Fluent::Plugin
           @base_labels[key] = expander.expand(value)
         end
       end
+
+      @quota = nil
+      @quota = YAML.load(@quota_file)['quotas'] \
+        if @quota_file != nil
     end
 
     def start

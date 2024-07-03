@@ -19,7 +19,7 @@ describe Fluent::Plugin::QuotaThrottleFilter do
   end
 
   def create_driver(conf='')
-    @driver = Fluent::Test::Driver::Filter.new(Fluent::Plugin::ThrottleFilter).configure(conf)
+    @driver = Fluent::Test::Driver::Filter.new(Fluent::Plugin::QuotaThrottleFilter).configure(conf)
   end
 
   describe '#configure' do
