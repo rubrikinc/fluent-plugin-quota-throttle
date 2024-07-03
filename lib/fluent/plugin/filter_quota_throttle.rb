@@ -32,12 +32,6 @@ module Fluent::Plugin
     config_param :group_drop_logs, :bool, :default => true
 
     desc <<~DESC
-      After a group has exceeded its bucket limit, logs are dropped until the
-      rate per second falls below or equal to group_reset_rate_s.
-    DESC
-    config_param :group_reset_rate_s, :integer, :default => nil
-
-    desc <<~DESC
       When a group reaches its limit and as long as it is not reset, a warning
       message with the current log rate of the group is emitted repeatedly.
       This is the delay between every repetition.
@@ -78,14 +72,6 @@ module Fluent::Plugin
         unless @group_bucket_limit > 0
 
       @group_rate_limit = (@group_bucket_limit / @group_bucket_period_s)
-
-      @group_reset_rate_s = @group_rate_limit \
-        if @group_reset_rate_s == nil
-
-      raise "group_reset_rate_s must be >= -1" \
-        unless @group_reset_rate_s >= -1
-      raise "group_reset_rate_s must be <= group_bucket_limit / group_bucket_period_s" \
-        unless @group_reset_rate_s <= @group_rate_limit
 
       raise "group_warning_delay_s must be >= 1" \
         unless @group_warning_delay_s >= 1
@@ -150,8 +136,8 @@ module Fluent::Plugin
         # next time period reached.
 
         # wait until rate drops back down (if enabled).
-        if counter.bucket_count == -1 and @group_reset_rate_s != -1
-          if counter.aprox_rate < @group_reset_rate_s
+        if counter.bucket_count == -1 and @group_rate_limit != -1
+          if counter.aprox_rate < @group_rate_limit
             log_rate_back_down(now, group, counter)
           else
             log_rate_limit_exceeded(now, group, counter)
@@ -222,8 +208,7 @@ module Fluent::Plugin
        'rate_s': rate,
        'period_s': @group_bucket_period_s,
        'limit': @group_bucket_limit,
-       'rate_limit_s': @group_rate_limit,
-       'reset_rate_s': @group_reset_rate_s}
+       'rate_limit_s': @group_rate_limit}
     end
 
     def get_counter(name, docstring)
