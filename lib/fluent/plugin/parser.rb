@@ -7,7 +7,7 @@ module Parser
   class Configuration
 
     def initialize(config_file_path)
-      @config_file= YAML.load(config_file_path)
+      @config_file= YAML.load_file(config_file_path)
       parse_quotas
     end
 

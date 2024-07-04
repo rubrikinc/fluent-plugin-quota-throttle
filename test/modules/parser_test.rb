@@ -4,28 +4,7 @@ require 'minitest/autorun'
 require_relative '../../lib/fluent/plugin/parser'
 class ParserTest < Minitest::Test
   def setup
-
-    @config_data = {
-      "quotas" => [
-        {
-          "name" => "quota1",
-          "description" => "first quota",
-          "group_by" => [ "group1" ],
-          "match_by" => { "group1" => "value1" },
-          "bucket_size" => 100,
-          "duration" => 60
-        },
-        {
-          "name" => "quota2",
-          "description" => "second quota",
-          "group_by" => [ "group1", "group2" ],
-          "match_by" => { "group1" => "value2", "group2" => "value3" },
-          "bucket_size" => 200,
-          "duration" => 120
-        }
-      ]
-    }
-    @config_file_path = @config_data.to_yaml
+    @config_file_path = Dir.pwd+"/test/modules/parser_test.yml"
     @configuration = Parser::Configuration.new(@config_file_path)
   end
 
