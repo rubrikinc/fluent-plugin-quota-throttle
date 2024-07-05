@@ -11,12 +11,12 @@ module Parser
       parse_quotas
     end
 
-    def get_quota(keys)
+    def get_quota(record)
       # Takes a list of keys and returns the quota that matches
       max_score = -1
       quota_to_return = nil
       @quotas.each do |quota|
-        score = matching_score(quota.match_by, keys)
+        score = matching_score(quota.match_by, record)
         if score > max_score
           max_score = score
           quota_to_return = quota
@@ -30,7 +30,9 @@ module Parser
     def parse_quotas
       # Parses the quotas from the configuration file into Quota objects and stores them in @quotas
       @quotas = @config_file["quotas"].map do |quota|
-        Quota.new(quota["name"], quota["description"], quota["group_by"], quota["match_by"], quota["bucket_size"], quota["duration"])
+        group_key = quota["group_by"].map { |key| key.split(".") }
+        match_by = quota["match_by"].map { |key,value| [key.split(".") , value] }.to_h
+        Quota.new(quota["name"], quota["description"], group_key, match_by, quota["bucket_size"], quota["duration"])
       end
     end
 
@@ -41,7 +43,7 @@ module Parser
         return 0
       end
       hash1.each do |key, value|
-        if hash2[key] == value
+        if hash2.dig(*key) == value
           score += 1
         else
           return -1

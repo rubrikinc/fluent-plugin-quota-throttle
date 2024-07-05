@@ -16,22 +16,22 @@ class ParserTest < Minitest::Test
   def test_get_quota
     # Check if the correct quota is retrieved from above definition
     # UT 1: Subset of groups match fully
-    keys = { "group1" => "value1" , "group2" => "value2" }
+    keys = { "group1" => { "a" => "value1" , "b" => "value2" } }
     quota = @configuration.get_quota(keys)
     assert_equal "quota1", quota.name
 
     # UT 2: All groups match fully
-    keys = { "group1" => "value2" , "group2" => "value3" }
+    keys = { "group1" => {"a" => "value2" , "b" => "value3" } }
     quota = @configuration.get_quota(keys)
     assert_equal "quota2", quota.name
 
     # UT 3: Subset of group match partially
-    keys = { "group1" => "value2" , "group2" => "value2" }
+    keys = { "group1" => { "a" => "value2" , "b" => "value2" } }
     quota = @configuration.get_quota(keys)
     assert_nil quota
 
     # UT 4: None of the group matches
-    keys = { "group1" => "value3" , "group2" => "value2" }
+    keys = { "group1" => { "a" => "value3" , "b" => "value2" } }
     quota = @configuration.get_quota(keys)
     assert_nil quota
   end
