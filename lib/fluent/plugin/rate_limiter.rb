@@ -1,20 +1,21 @@
-module Grouping
+module RateLimiter
   class Bucket
-    attr_accessor :bucket_count, :bucket_last_reset, :approx_rate, :rate_last_reset, :curr_count, :last_warning, :timeout_s
-    def initialize(bucket_count, bucket_last_reset, approx_rate, rate_last_reset, curr_count, last_warning, bucket_limit, bucket_period)
-      @bucket_count = bucket_count
-      @bucket_last_reset = bucket_last_reset
-      @approx_rate = approx_rate
-      @rate_last_reset = rate_last_reset
-      @curr_count = curr_count
-      @last_warning = last_warning
+    attr_accessor :bucket_count, :bucket_last_reset, :approx_rate_per_second, :rate_last_reset, :curr_count, :last_warning, :timeout_s
+    def initialize( bucket_limit, bucket_period)
+      now = Time.now
+      @bucket_count = 0
+      @bucket_last_reset = now
+      @approx_rate_per_second = 0
+      @rate_last_reset = now
+      @curr_count = 0
+      @last_warning = nil
       @bucket_limit = bucket_limit
       @bucket_period = bucket_period
       @rate_limit = bucket_limit/bucket_period
       @timeout_s = 2*bucket_period
     end
 
-    def increment
+    def allow
       # Returns true if the bucket is free
       # Returns false if the bucket is full
       now = Time.now
@@ -22,7 +23,7 @@ module Grouping
       time_lapsed = now - @rate_last_reset
 
       if time_lapsed >= 1
-        @approx_rate = @curr_count / time_lapsed
+        @approx_rate_per_second = @curr_count / time_lapsed
         @rate_last_reset = now
         @curr_count = 0
       end
@@ -45,14 +46,14 @@ module Grouping
     def reset_bucket
       # Does necessary processing when window moves to next time period
       now = Time.now
-      unless @bucket_count == -1 && @approx_rate > @rate_limit
+      unless @bucket_count == -1 && @approx_rate_per_second > @rate_limit
         @bucket_count = 0
         @bucket_last_reset = now
       end
     end
   end
 
-  class Counters
+  class BucketStore
     def initialize
       @counters = {}
     end
