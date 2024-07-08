@@ -65,7 +65,7 @@ module Grouping
     def clean_counters
       now = Time.now
       lru_group, lru_counter = @counters.first
-      if !lru_group.nil? && now - lru_counter.rate_last_reset > lru_counter.timeout_s
+      if !lru_group.nil? && now.to_i - lru_counter.rate_last_reset > lru_counter.timeout_s
         @counters.delete(lru_group)
       end
     end
