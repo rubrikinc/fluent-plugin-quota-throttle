@@ -38,13 +38,19 @@ module ConfigParser
 
     def parse_quotas
       # Parses the quotas from the configuration file into Quota objects and stores them in @quotas
-      @quotas = @config_file["quotas"].map do |quota|
-        group_key = quota["group_by"].map { |key| key.split(".") }
-        match_by = quota["match_by"].map { |key,value| [key.split(".") , value] }.to_h
-        Quota.new(quota["name"], quota["description"], group_key, match_by, quota["bucket_size"], quota["duration"], quota["action"])
+      if @config_file.has_key?("quotas")
+        @quotas = @config_file["quotas"].map do |quota|
+          group_key = quota["group_by"].map { |key| key.split(".") }
+          match_by = quota["match_by"].map { |key,value| [key.split(".") , value] }.to_h
+          Quota.new(quota["name"], quota["description"], group_key, match_by, quota["bucket_size"], quota["duration"], quota["action"])
+        end
       end
-      default_quota_config = @config_file["default"]
-      @default_quota = Quota.new("default", default_quota_config["description"], default_quota_config["group_by"].map { |key| key.split(".") }, [], default_quota_config["bucket_size"], default_quota_config["duration"], default_quota_config["action"])
+      if @config_file.has_key?("default")
+        default_quota_config = @config_file["default"]
+        @default_quota = Quota.new("default", default_quota_config["description"], default_quota_config["group_by"].map { |key| key.split(".") }, [], default_quota_config["bucket_size"], default_quota_config["duration"], default_quota_config["action"])
+      else
+        raise "Default quota not found in configuration file"
+      end
     end
   end
 end
