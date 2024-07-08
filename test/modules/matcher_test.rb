@@ -4,7 +4,7 @@ require_relative '../../lib/fluent/plugin/matcher'
 
 class ParserTest < Minitest::Test
   def setup
-    @config_file_path = Dir.pwd+"/test/modules/matcher_test.yml"
+    @config_file_path = Dir.pwd+"/test/config_files/matcher_test.yml"
     @quotas = ConfigParser::Configuration.new(@config_file_path).quotas
     @quota_info = Matcher::QuotaInfo.new(@quotas)
   end

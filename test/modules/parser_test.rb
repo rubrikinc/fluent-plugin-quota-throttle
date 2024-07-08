@@ -4,7 +4,7 @@ require 'minitest/autorun'
 require_relative '../../lib/fluent/plugin/parser'
 class ParserTest < Minitest::Test
   def setup
-    @config_file_path = Dir.pwd+"/test/modules/parser_test.yml"
+    @config_file_path = Dir.pwd+"/test/config_files/parser_test.yml"
     @quotas = ConfigParser::Configuration.new(@config_file_path).quotas
   end
 

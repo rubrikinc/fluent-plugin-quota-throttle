@@ -6,7 +6,7 @@ module ConfigParser
 
     attr_accessor :name, :desc, :group_by, :match_by, :bucket_size, :duration, :action
 
-    @@allowed_actions = ["delete", "reemit"]
+    @@allowed_actions = Set["delete", "reemit"]
 
     def initialize(name, desc, group_by, match_by, bucket_size, duration, action)
       raise "Name cannot be empty" if name.nil?
