@@ -6,7 +6,7 @@ module ConfigParser
 
     attr_accessor :name, :desc, :group_by, :match_by, :bucket_size, :duration, :action
 
-    @@allowed_actions = Set["delete", "reemit"]
+    @@allowed_actions = Set["drop", "reemit"]
 
     def initialize(name, desc, group_by, match_by, bucket_size, duration, action)
       raise "Name cannot be empty" if name.nil?
@@ -26,7 +26,7 @@ module ConfigParser
 
   class Configuration
 
-    attr_reader :quotas
+    attr_reader :quotas,:default_quota
 
     def initialize(config_file_path)
       @config_file= YAML.load_file(config_file_path)
@@ -43,6 +43,8 @@ module ConfigParser
         match_by = quota["match_by"].map { |key,value| [key.split(".") , value] }.to_h
         Quota.new(quota["name"], quota["description"], group_key, match_by, quota["bucket_size"], quota["duration"], quota["action"])
       end
+      default_quota_config = @config_file["default"]
+      @default_quota = Quota.new("default", default_quota_config["description"], default_quota_config["group_by"].map { |key| key.split(".") }, [], default_quota_config["bucket_size"], default_quota_config["duration"], default_quota_config["action"])
     end
   end
 end

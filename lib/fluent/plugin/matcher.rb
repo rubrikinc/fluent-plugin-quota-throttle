@@ -2,14 +2,15 @@ module Matcher
 
   class Match_Helper
 
-    def initialize(processed_quotas)
+    def initialize(processed_quotas,default_quota)
       @quotas = processed_quotas
+      @default_quota = default_quota
     end
 
     def get_quota(record)
       # Takes a list of keys and returns the quota that maximally matches
-      max_score = -1
-      quota_to_return = nil
+      max_score = 0
+      quota_to_return = @default_quota
       @quotas.each do |quota|
         score = matching_score(quota.match_by, record)
         if score > max_score
@@ -24,8 +25,6 @@ module Matcher
 
     def matching_score(match, record)
       # Calculates the matching score between two hashes.
-      # 0 is used to determine the match with default quota
-      # -1 i used to determine a mismatch with match_by clauses
       score = 0
       if match.nil? || record.nil?
         return 0
@@ -34,11 +33,8 @@ module Matcher
         if record.dig(*key) == value
           score += 1
         else
-          return -1
+          return 0
         end
-      end
-      if score == 0
-        return -1
       end
       score
     end

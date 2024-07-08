@@ -4,9 +4,11 @@ require_relative '../../lib/fluent/plugin/matcher'
 
 class ParserTest < Minitest::Test
   def setup
-    @config_file_path = Dir.pwd+"/test/config_files/matcher_test.yml"
-    @quotas = ConfigParser::Configuration.new(@config_file_path).quotas
-    @quota_info = Matcher::Match_Helper.new(@quotas)
+    config_file_path = Dir.pwd+"/test/config_files/matcher_test.yml"
+    config_parser = ConfigParser::Configuration.new(config_file_path)
+    quotas = config_parser.quotas
+    @default_quota = config_parser.default_quota
+    @quota_info = Matcher::Match_Helper.new(quotas,@default_quota)
   end
 
   def test_get_quota
@@ -24,12 +26,12 @@ class ParserTest < Minitest::Test
     # UT 3: Subset of group match partially
     keys = { "group1" => { "a" => "value2" , "b" => "value2" } }
     quota = @quota_info.get_quota(keys)
-    assert_nil quota
+    assert_equal @default_quota, quota
 
     # UT 4: None of the group matches
     keys = { "group1" => { "a" => "value3" , "b" => "value2" } }
     quota = @quota_info.get_quota(keys)
-    assert_nil quota
+    assert_equal @default_quota, quota
   end
 
   def test_matching_score
@@ -38,10 +40,10 @@ class ParserTest < Minitest::Test
     assert_equal 2, score
 
     score = @quota_info.send(:matching_score, { "key1" => "value1" }, { "key2" => "value2" })
-    assert_equal -1, score
+    assert_equal 0, score
 
     score = @quota_info.send(:matching_score, { "key1" => "value1" , "key2" => "value2" }, { "key1" => "value1" , "key2" => "value3" })
-    assert_equal -1, score
+    assert_equal 0, score
 
     score = @quota_info.send(:matching_score, nil, { "key1" => "value1" })
     assert_equal 0, score

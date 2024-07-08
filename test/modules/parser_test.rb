@@ -4,8 +4,10 @@ require 'minitest/autorun'
 require_relative '../../lib/fluent/plugin/parser'
 class ParserTest < Minitest::Test
   def setup
-    @config_file_path = Dir.pwd+"/test/config_files/parser_test.yml"
-    @quotas = ConfigParser::Configuration.new(@config_file_path).quotas
+    config_file_path = Dir.pwd+"/test/config_files/parser_test.yml"
+    config_parser = ConfigParser::Configuration.new(config_file_path)
+    @quotas = config_parser.quotas
+    @default_quota = config_parser.default_quota
   end
 
   def test_parse_quotas
@@ -25,10 +27,17 @@ class ParserTest < Minitest::Test
     assert_equal 200, @quotas[1].bucket_size
     assert_equal 60, @quotas[0].duration
     assert_equal 120, @quotas[1].duration
-    assert_equal "delete", @quotas[0].action
+    assert_equal "drop", @quotas[0].action
     assert_equal "reemit", @quotas[1].action
     assert_equal ({["group1", "a"] => "value1"}), @quotas[0].match_by
     assert_equal ({["group1", "a"] => "value2", ["group1", "b"] => "value3"}), @quotas[1].match_by
+    assert_equal "default", @default_quota.name
+    assert_equal "default quota", @default_quota.desc
+    assert_equal [["group1", "a"]], @default_quota.group_by
+    assert_equal [], @default_quota.match_by
+    assert_equal 300, @default_quota.bucket_size
+    assert_equal 180, @default_quota.duration
+    assert_equal "reemit", @default_quota.action
   end
 
 end
