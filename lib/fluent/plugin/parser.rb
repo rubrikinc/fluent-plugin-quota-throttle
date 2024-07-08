@@ -1,28 +1,37 @@
 require 'yaml'
 
-module Parser
+module ConfigParser
 
-  Quota = Struct.new(:name, :desc, :group_by, :match_by, :bucket_size, :duration)
+  class Quota
+
+    attr_accessor :name, :desc, :group_by, :match_by, :bucket_size, :duration, :action
+
+    @@allowed_actions = ["delete", "reemit"]
+
+    def initialize(name, desc, group_by, match_by, bucket_size, duration, action)
+      raise "Name cannot be empty" if name.nil?
+      raise "Group by cannot be empty" if group_by.nil?
+      raise "Bucket size cannot be empty" unless bucket_size.is_a?(Integer)
+      raise "Duration cannot be empty" unless duration.is_a?(Integer)
+      raise "Action must be one of #{@@allowed_actions}" unless @@allowed_actions.include?action
+      @name = name
+      @desc = desc
+      @group_by = group_by
+      @match_by = match_by
+      @bucket_size = bucket_size
+      @duration = duration
+      @action = action
+    end
+  end
 
   class Configuration
 
+    attr_reader :quotas
+
     def initialize(config_file_path)
       @config_file= YAML.load_file(config_file_path)
+      @quotas = nil
       parse_quotas
-    end
-
-    def get_quota(record)
-      # Takes a list of keys and returns the quota that matches
-      max_score = -1
-      quota_to_return = nil
-      @quotas.each do |quota|
-        score = matching_score(quota.match_by, record)
-        if score > max_score
-          max_score = score
-          quota_to_return = quota
-        end
-      end
-      quota_to_return
     end
 
     private
@@ -32,27 +41,8 @@ module Parser
       @quotas = @config_file["quotas"].map do |quota|
         group_key = quota["group_by"].map { |key| key.split(".") }
         match_by = quota["match_by"].map { |key,value| [key.split(".") , value] }.to_h
-        Quota.new(quota["name"], quota["description"], group_key, match_by, quota["bucket_size"], quota["duration"])
+        Quota.new(quota["name"], quota["description"], group_key, match_by, quota["bucket_size"], quota["duration"], quota["action"])
       end
-    end
-
-    def matching_score(hash1, hash2)
-      # Calculates the matching score between two hashes.
-      score = 0
-      if hash1.nil? || hash2.nil?
-        return 0
-      end
-      hash1.each do |key, value|
-        if hash2.dig(*key) == value
-          score += 1
-        else
-          return -1
-        end
-      end
-      if score == 0
-        return -1
-      end
-      score
     end
   end
 end
