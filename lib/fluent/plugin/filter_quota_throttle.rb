@@ -7,7 +7,6 @@ module Fluent::Plugin
     desc "Path for the quota config file"
     config_param :path, :string, :default => nil
 
-    Group = Struct.new(:bucket_count,:bucket_last_reset,:approx_rate,:rate_last_reset,:curr_count,:last_warning)
     def initialize
       super
     end
@@ -21,7 +20,6 @@ module Fluent::Plugin
 
     def start
       super
-      @counters = {}
     end
 
     def shutdown
