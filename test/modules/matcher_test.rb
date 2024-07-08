@@ -32,6 +32,16 @@ class ParserTest < Minitest::Test
     keys = { "group1" => { "a" => "value3" , "b" => "value2" } }
     quota = @match_helper.get_quota(keys)
     assert_equal @default_quota, quota
+
+    # UT 5: Non-nested group matches
+    keys = { "group2" => "value2" , "group3" => "value3" }
+    quota = @match_helper.get_quota(keys)
+    assert_equal "quota3", quota.name
+
+    # UT 6: Non-nested group mismatches
+    keys = { "group2" => "value2" , "group3" => "value4" }
+    quota = @match_helper.get_quota(keys)
+    assert_equal @default_quota, quota
   end
 
   def test_matching_score
