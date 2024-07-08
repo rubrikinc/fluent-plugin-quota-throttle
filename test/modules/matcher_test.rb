@@ -6,7 +6,7 @@ class ParserTest < Minitest::Test
   def setup
     @config_file_path = Dir.pwd+"/test/config_files/matcher_test.yml"
     @quotas = ConfigParser::Configuration.new(@config_file_path).quotas
-    @quota_info = Matcher::QuotaInfo.new(@quotas)
+    @quota_info = Matcher::Match_Helper.new(@quotas)
   end
 
   def test_get_quota

@@ -1,6 +1,6 @@
 module Matcher
 
-  class QuotaInfo
+  class Match_Helper
 
     def initialize(processed_quotas)
       @quotas = processed_quotas
