@@ -37,6 +37,9 @@ module RateLimiter
     #   +true+ if the bucket is free
     #   +false+ if the bucket is full
     def allow
+      if @bucket_limit == -1
+        return true
+      end
       now = Time.now
       @curr_count += 1
       time_lapsed = now - @rate_last_reset
