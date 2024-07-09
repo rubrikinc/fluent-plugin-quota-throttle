@@ -35,6 +35,13 @@ class TestBucket < Minitest::Test
     @bucket.send(:reset_bucket)
     assert_equal 0, @bucket.bucket_count
   end
+
+  def test_expired
+    @bucket.allow
+    assert_equal false, @bucket.expired
+    sleep(5)
+    assert_equal true, @bucket.expired
+  end
 end
 
 class TestBucketStore < Minitest::Test

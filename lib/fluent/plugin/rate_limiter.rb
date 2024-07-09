@@ -60,6 +60,15 @@ module RateLimiter
       end
     end
 
+    # Checks if bucket is expired
+    # Returns:
+    #   +true+ if the bucket is expired
+    #   +false+ if the bucket is not expired
+    def expired
+      now = Time.now
+      now.to_i - @rate_last_reset.to_i > @timeout_s
+    end
+
     private
 
     # Resets the bucket when the window moves to the next time period
@@ -94,8 +103,7 @@ module RateLimiter
     def clean_buckets
       now = Time.now
       lru_group, lru_bucket = @buckets.first
-      puts now - lru_bucket.rate_last_reset
-      if !lru_group.nil? && now.to_i - lru_bucket.rate_last_reset.to_i > lru_bucket.timeout_s
+      if !lru_group.nil? && lru_bucket.expired
         @buckets.delete(lru_group)
       end
     end
