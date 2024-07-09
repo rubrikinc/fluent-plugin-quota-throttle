@@ -11,7 +11,7 @@ module ConfigParser
   #   +desc+: (String) A description of the quota.
   #   +group_by+: (Array of Arrays of Strings) Specifies how to group transactions or events for quota tracking.
   #   +match_by+: (Hash) Defines the conditions that must be met for the quota to apply. Keys are the conditions to match, and values are the expected values.
-  #   +bucket_size+: (Integer) The size of the quota bucket, indicating how many transactions or events can occur before the quota is exceeded.
+  #   +bucket_size+: (Integer) The size of the quota bucket, indicating how many transactions or events can occur before the quota is exceeded. A value of -1 indicates no quota limit.
   #   +duration+: (Integer) The duration (in seconds) for which the quota bucket size is valid.
   #   +action+: (String) The action to take when the quota is reached. Must be one of the predefined actions in @@allowed_actions.
   class Quota
@@ -48,6 +48,7 @@ module ConfigParser
     def initialize(config_file_path)
       @config_file= YAML.load_file(config_file_path)
       @quotas = nil
+      @default_quota = nil
       parse_quotas
     end
 
@@ -66,7 +67,7 @@ module ConfigParser
         default_quota_config = @config_file["default"]
         @default_quota = Quota.new("default", default_quota_config["description"], default_quota_config["group_by"].map { |key| key.split(".") }, [], default_quota_config["bucket_size"], default_quota_config["duration"], default_quota_config["action"])
       else
-        raise "Default quota not found in configuration file"
+        @default_quota = Quota.new("default", "Default quota", [], [], -1, 0, "drop")
       end
     end
   end
