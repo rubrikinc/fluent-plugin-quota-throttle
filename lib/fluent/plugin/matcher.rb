@@ -1,15 +1,29 @@
+##
+# This module is responsible for matching records to quotas.
 module Matcher
 
-  class Match_Helper
+  ##
+  # MatchHelper class is responsible for matching records to quotas.
+  # Methods:
+  #   +get_quota+: Takes a list of keys and returns the quota that maximally matches
+  #   +matching_score+: Calculates the matching score between two hashes.
+  class MatchHelper
 
-    def initialize(processed_quotas)
+    def initialize(processed_quotas,default_quota)
       @quotas = processed_quotas
+      @default_quota = default_quota
     end
 
+    # Takes a list of keys and returns the quota that maximally matches
+    # If no quota matches, returns the default quota
+    # Params:
+    #   +record+: (Hash) A hash of keys and values to match against the quotas
+    # Returns:
+    #   +quota+: (Quota Class)The quota that maximally matches the record
     def get_quota(record)
-      # Takes a list of keys and returns the quota that maximally matches
-      max_score = -1
-      quota_to_return = nil
+
+      max_score = 0
+      quota_to_return = @default_quota
       @quotas.each do |quota|
         score = matching_score(quota.match_by, record)
         if score > max_score
@@ -22,10 +36,11 @@ module Matcher
 
     private
 
+    # Calculates the matching score between two hashes.
+    # Params:
+    #   +match+: (Hash) A hash of keys and values to match against the record
+    #   +record+: (Hash) A hash of keys and values to match against the match
     def matching_score(match, record)
-      # Calculates the matching score between two hashes.
-      # 0 is used to determine the match with default quota
-      # -1 i used to determine a mismatch with match_by clauses
       score = 0
       if match.nil? || record.nil?
         return 0
@@ -34,11 +49,8 @@ module Matcher
         if record.dig(*key) == value
           score += 1
         else
-          return -1
+          return 0
         end
-      end
-      if score == 0
-        return -1
       end
       score
     end
