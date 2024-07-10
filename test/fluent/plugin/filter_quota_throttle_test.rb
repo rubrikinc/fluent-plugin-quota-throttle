@@ -9,7 +9,7 @@ class QuotaThrottleFilterTest < Minitest::Test
 
   CONFIG = %[
     path test/config_files/filter_plugin_test.yml
-    warning_delay 30
+    warning_delay 2m
   ]
 
   def create_driver(conf = CONFIG)
@@ -19,7 +19,7 @@ class QuotaThrottleFilterTest < Minitest::Test
   def test_configure
     d = create_driver
     assert_equal "test/config_files/filter_plugin_test.yml", d.instance.path
-    assert_equal 30, d.instance.warning_delay
+    assert_equal 120, d.instance.warning_delay
   end
 
   def test_filter

@@ -17,7 +17,7 @@ module Fluent::Plugin
     config_param :path, :string, :default => nil
 
     desc "Delay in seconds between warnings for the same group when the quota is breached"
-    config_param :warning_delay, :integer, :default => 60
+    config_param :warning_delay, :time, :default => 60
 
     def initialize
       @reemit_tag_suffix = "secondary"
