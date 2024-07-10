@@ -29,6 +29,8 @@ module Fluent::Plugin
       super
       raise "quota config file should not be empty" \
         if @path.nil?
+      raise "Warning delay should be non negative" \
+        if @warning_delay < 0
       @config = ConfigParser::Configuration.new(@path)
       @match_helper = Matcher::MatchHelper.new(@config.quotas, @config.default_quota)
     end
