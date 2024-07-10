@@ -1,5 +1,4 @@
-require 'minitest/autorun'
-require_relative '../../lib/fluent/plugin/rate_limiter'
+require_relative '../helper'
 
 class TestBucket < Minitest::Test
   def setup

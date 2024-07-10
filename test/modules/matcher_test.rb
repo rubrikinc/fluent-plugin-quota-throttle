@@ -1,6 +1,4 @@
-require 'minitest/autorun'
-require_relative '../../lib/fluent/plugin/parser'
-require_relative '../../lib/fluent/plugin/matcher'
+require_relative '../helper'
 
 class MatcherTest < Minitest::Test
   def setup

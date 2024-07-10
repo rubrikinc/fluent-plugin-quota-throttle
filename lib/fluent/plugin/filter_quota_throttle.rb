@@ -1,5 +1,5 @@
 require 'fluent/plugin/filter'
-require_relative 'parser'
+require_relative 'config_parser'
 require_relative 'matcher'
 require_relative 'rate_limiter'
 

@@ -1,0 +1,10 @@
+$LOAD_PATH.unshift File.expand_path("../test", __dir__)
+require 'fluent/test'
+require 'fluent/test/driver/filter'
+require 'fluent/test/helpers'
+require 'yaml'
+require 'minitest/autorun'
+require_relative '../lib/fluent/plugin/config_parser'
+require_relative '../lib/fluent/plugin/matcher'
+require_relative '../lib/fluent/plugin/rate_limiter'
+require_relative '../lib/fluent/plugin/filter_quota_throttle'

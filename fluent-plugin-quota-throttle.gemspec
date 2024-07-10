@@ -19,7 +19,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "test-unit"
-  spec.add_runtime_dependency "mutex_m"
+  spec.add_development_dependency "rake"
+  spec.add_development_dependency "mutex_m"
 
   spec.add_runtime_dependency "fluentd"
 end
