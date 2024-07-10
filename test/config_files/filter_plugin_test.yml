@@ -1,0 +1,28 @@
+quotas:
+  - name: quota1
+    description: first quota
+    group_by:
+      - group1.a
+    match_by:
+      group1.a: value1
+    bucket_size: 5
+    duration: 60
+    action: drop
+  - name: quota2
+    description: second quota
+    group_by:
+      - group1.a
+      - group1.b
+    match_by:
+      group1.a: value2
+      group1.b: value3
+    bucket_size: 6
+    duration: 120
+    action: reemit
+default:
+  description: default quota
+  group_by:
+    - group1.a
+  bucket_size: 4
+  duration: 180
+  action: reemit
