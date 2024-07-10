@@ -2,7 +2,7 @@ require 'minitest/autorun'
 require_relative '../../lib/fluent/plugin/parser'
 require_relative '../../lib/fluent/plugin/matcher'
 
-class ParserTest < Minitest::Test
+class MatcherTest < Minitest::Test
   def setup
     config_file_path = Dir.pwd+"/test/config_files/matcher_test.yml"
     config_parser = ConfigParser::Configuration.new(config_file_path)

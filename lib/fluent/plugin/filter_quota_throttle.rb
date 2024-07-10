@@ -1,7 +1,7 @@
 require 'fluent/plugin/filter'
-require_relative './parser'
-require_relative './matcher'
-require_relative './rate_limiter'
+require_relative 'parser'
+require_relative 'matcher'
+require_relative 'rate_limiter'
 
 ##
 # Fluentd plugin that filters records based on quotas
