@@ -16,9 +16,11 @@ module Fluent::Plugin
     desc "Path for the quota config file"
     config_param :path, :string, :default => nil
 
+    desc "Delay in seconds between warnings for the same group when the quota is breached"
+    config_param :warning_delay, :integer, :default => 60
+
     def initialize
-      @reemit_tag_prefix = "reemit."
-      @warning_delay = 60
+      @reemit_tag_suffix = "secondary"
       super
     end
 
@@ -27,8 +29,8 @@ module Fluent::Plugin
       super
       raise "quota config file should not be empty" \
         if @path.nil?
-      @config = Parser::Configuration.new(@path)
-      @match_helper = Matcher::Match_Helper.new(@config.quotas, @config.default_quota)
+      @config = ConfigParser::Configuration.new(@path)
+      @match_helper = Matcher::MatchHelper.new(@config.quotas, @config.default_quota)
     end
 
     def start
@@ -77,7 +79,7 @@ module Fluent::Plugin
         log.debug "Dropping record"
       when "reemit"
         log.debug "Reemitting record"
-        new_tag = @reemit_tag_prefix + tag
+        new_tag = "#{tag}.#{@reemit_tag_suffix}"
         router.emit(new_tag, timestamp, record)
       end
     end
