@@ -28,7 +28,7 @@ module Fluent::Plugin
     def configure(conf)
       super
       raise "quota config file should not be empty" \
-        if @path.nil?
+        if @path.nil? or !File.exist?(@path)
       raise "Warning delay should be non negative" \
         if @warning_delay < 0
       @config = ConfigParser::Configuration.new(@path)
