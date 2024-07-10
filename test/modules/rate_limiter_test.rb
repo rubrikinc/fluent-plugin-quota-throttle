@@ -1,6 +1,5 @@
-require 'minitest/autorun'
-require_relative '../../lib/fluent/plugin/rate_limiter'
-require_relative '../../lib/fluent/plugin/parser'
+require_relative '../helper'
+
 class TestBucket < Minitest::Test
   def setup
     # Initialize bucket with dummy parameters

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
+require_relative '../helper'
 
-require 'minitest/autorun'
-require_relative '../../lib/fluent/plugin/parser'
 class ParserTest < Minitest::Test
   def setup
     config_file_path = Dir.pwd+"/test/config_files/parser_test.yml"
