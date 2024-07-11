@@ -59,7 +59,7 @@ module Fluent::Plugin
       if @enable_metrics
         @metrics = {
            quota_input: get_counter(:fluentd_quota_throttle_input, "Number of records entering quota throttle plugin"),
-           quota_filtered: get_counter(:fluentd_quota_throttle_filtered, "Number of records filtered by quota throttle plugin"),
+           quota_exceeded: get_counter(:fluentd_quota_throttle_exceeded, "Number of records exceeded the quota"),
         }
       end
     end
@@ -84,11 +84,11 @@ module Fluent::Plugin
         @metrics[:quota_input].increment(by: 1, labels: @base_labels.merge({quota: quota.name}))
       end
       if bucket.allow
-        if @enable_metrics
-          @metrics[:quota_filtered].increment(by: 1, labels: @base_labels.merge({quota: quota.name}))
-        end
         record
       else
+        if @enable_metrics
+          @metrics[:quota_exceeded].increment(by: 1, labels: @base_labels.merge({quota: quota.name}))
+        end
         quota_breached(tag, time, record, bucket, quota)
         nil
       end
