@@ -49,10 +49,10 @@ class QuotaThrottleFilterTest < Minitest::Test
       end
     end
     assert_equal 10, d.instance.registry.get(:fluentd_quota_throttle_input).get(labels: {quota: 'quota1'})
-    assert_equal 6, d.instance.registry.get(:fluentd_quota_throttle_filtered).get(labels: {quota: 'quota1'})
+    assert_equal 4, d.instance.registry.get(:fluentd_quota_throttle_exceeded).get(labels: {quota: 'quota1'})
     assert_equal 10, d.instance.registry.get(:fluentd_quota_throttle_input).get(labels: {quota: 'quota2'})
-    assert_equal 7, d.instance.registry.get(:fluentd_quota_throttle_filtered).get(labels: {quota: 'quota2'})
+    assert_equal 3, d.instance.registry.get(:fluentd_quota_throttle_exceeded).get(labels: {quota: 'quota2'})
     assert_equal 20, d.instance.registry.get(:fluentd_quota_throttle_input).get(labels: {quota: 'default'})
-    assert_equal 10, d.instance.registry.get(:fluentd_quota_throttle_filtered).get(labels: {quota: 'default'})
+    assert_equal 10, d.instance.registry.get(:fluentd_quota_throttle_exceeded).get(labels: {quota: 'default'})
   end
 end

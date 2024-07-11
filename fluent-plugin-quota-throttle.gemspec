@@ -21,6 +21,9 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "test-unit" , "~> 3.6"
   spec.add_development_dependency "rake" , "~> 13.0"
   spec.add_development_dependency "mutex_m" , "~> 0.1"
+  spec.add_development_dependency "webrick" , "~> 1.8"
+  spec.add_development_dependency "csv" , "~> 3.3"
+  spec.add_development_dependency "base64" , "~> 0.2"
 
   spec.add_runtime_dependency "fluentd" , "~> 1.9"
   spec.add_runtime_dependency "fluent-plugin-prometheus", " = 2.1.0"
