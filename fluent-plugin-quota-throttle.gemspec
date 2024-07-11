@@ -23,4 +23,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "mutex_m"
 
   spec.add_runtime_dependency "fluentd"
+  spec.add_runtime_dependency "fluent-plugin-prometheus"
 end
