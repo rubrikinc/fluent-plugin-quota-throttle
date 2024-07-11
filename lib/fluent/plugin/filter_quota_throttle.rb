@@ -57,7 +57,10 @@ module Fluent::Plugin
       super
       @bucket_store = RateLimiter::BucketStore.new
       if @enable_metrics
-        @metrics = {quota_usage: get_counter(:fluentd_quota_throttle_usage, "Quota usage for each group when throttling is applied")}
+        @metrics = {
+           quota_input: get_counter(:fluentd_quota_throttle_input, "Number of records entering quota throttle plugin"),
+           quota_filtered: get_counter(:fluentd_quota_throttle_filtered, "Number of records filtered by quota throttle plugin"),
+        }
       end
     end
 
@@ -77,7 +80,13 @@ module Fluent::Plugin
       quota = @match_helper.get_quota(record)
       group = quota.group_by.map { |key| record.dig(*key) }
       bucket = @bucket_store.get_bucket(group, quota)
+      if @enable_metrics
+        @metrics[:quota_input].increment(labels: @base_labels.merge("quota" => quota.name))
+      end
       if bucket.allow
+        if @enable_metrics
+          @metrics[:quota_filtered].increment(labels: @base_labels.merge("quota" => quota.name))
+        end
         record
       else
         quota_breached(bucket, quota, time)
@@ -111,7 +120,7 @@ module Fluent::Plugin
       if @registry.exist?(name)
         @registry.get(name)
       else
-        @registry.counter(name, docstring: docstring, base_labels: @base_labels.keys)
+        @registry.counter(name, docstring: docstring, base_labels: @base_labels.keys + ["quota"])
       end
     end
   end
