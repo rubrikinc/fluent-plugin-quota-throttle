@@ -27,8 +27,7 @@ module Fluent::Plugin
 
     def initialize
       super
-      @reemit_tag_suffix = "secondary"
-
+      @reemit_tag_prefix = "secondary"
       @registry = Prometheus::Client.registry if @enable_metrics
     end
 
@@ -103,7 +102,7 @@ module Fluent::Plugin
         log.debug "Dropping record"
       when "reemit"
         log.debug "Reemitting record"
-        new_tag = "#{tag}.#{@reemit_tag_suffix}"
+        new_tag = "#{@reemit_tag_prefix}.#{tag}"
         router.emit(new_tag, timestamp, record)
       end
     end
