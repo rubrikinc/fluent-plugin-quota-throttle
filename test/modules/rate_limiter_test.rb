@@ -3,7 +3,7 @@ require_relative '../helper'
 class TestBucket < Minitest::Test
   def setup
     # Initialize bucket with dummy parameters
-    @bucket = RateLimiter::Bucket.new(10, 2)
+    @bucket = RateLimiter::Bucket.new( ["group"] ,10, 2)
   end
 
   def test_bucket_initialization
