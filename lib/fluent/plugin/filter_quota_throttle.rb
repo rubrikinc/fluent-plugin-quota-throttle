@@ -89,7 +89,7 @@ module Fluent::Plugin
         end
         record
       else
-        quota_breached(bucket, quota, time)
+        quota_breached(tag, time, record, bucket, quota)
         nil
       end
     end
@@ -101,7 +101,7 @@ module Fluent::Plugin
     #   +bucket+: (Bucket) The bucket that has breached the quota
     #   +quota+: (Quota) The quota that has been breached
     #   +timestamp+: (Time) The timestamp of the record
-    def quota_breached(bucket, quota, timestamp)
+    def quota_breached(tag, timestamp, record, bucket, quota)
       if bucket.last_warning.nil? || Time.now - bucket.last_warning > @warning_delay
         log.warn "Quota breached for group #{bucket.group} in quota #{quota.name}"
         bucket.last_warning = Time.now
