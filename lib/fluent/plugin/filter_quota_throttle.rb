@@ -11,7 +11,6 @@ module Fluent::Plugin
   # QuotaThrottleFilter class is derived from the Filter class and is responsible for filtering records based on quotas
   class QuotaThrottleFilter < Filter
     Fluent::Plugin.register_filter('quota_throttle', self)
-    helpers :event_emitter
 
     desc "Path for the quota config file"
     config_param :path, :string, :default => nil
@@ -81,7 +80,7 @@ module Fluent::Plugin
         log.debug "Dropping record"
       when "reemit"
         log.debug "Reemitting record"
-        new_tag = "#{tag}.#{@reemit_tag_suffix}"
+        new_tag = "#{@reemit_tag_preffix}.#{tag}"
         router.emit(new_tag, timestamp, record)
       end
     end
