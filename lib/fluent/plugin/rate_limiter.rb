@@ -17,9 +17,10 @@ module RateLimiter
   #   +rate_limit+: Maximum number of requests allowed per second
   class Bucket
     attr_accessor :bucket_count, :bucket_last_reset, :approx_rate_per_second, :rate_last_reset, :curr_count, :last_warning
-    attr_reader :bucket_limit, :bucket_period, :rate_limit, :timeout_s
-    def initialize( bucket_limit, bucket_period)
+    attr_reader :bucket_limit, :bucket_period, :rate_limit, :timeout_s, :group
+    def initialize( group, bucket_limit, bucket_period)
       now = Time.now
+      @group = group
       @bucket_count = 0
       @bucket_last_reset = now
       @approx_rate_per_second = 0
@@ -99,7 +100,7 @@ module RateLimiter
     #   +quota+: Quota object containing the bucket size and duration
     def get_bucket(group, quota)
       now = Time.now
-      @buckets[group] = @buckets.delete(group) || Bucket.new( quota.bucket_size, quota.duration)
+      @buckets[group] = @buckets.delete(group) || Bucket.new( group, quota.bucket_size, quota.duration)
     end
 
     # Cleans the buckets that have expired
