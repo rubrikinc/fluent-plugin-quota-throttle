@@ -28,7 +28,7 @@ module Fluent::Plugin
     def initialize
       super
       @reemit_tag_prefix = "secondary"
-      @registry = Prometheus::Client.registry if @enable_metrics
+      @registry = ::Prometheus::Client.registry
     end
 
     # Configures the plugin
@@ -81,11 +81,11 @@ module Fluent::Plugin
       group = quota.group_by.map { |key| record.dig(*key) }
       bucket = @bucket_store.get_bucket(group, quota)
       if @enable_metrics
-        @metrics[:quota_input].increment(labels: @base_labels.merge("quota" => quota.name))
+        @metrics[:quota_input].increment(by: 1, labels: @base_labels.merge({quota: quota.name}))
       end
       if bucket.allow
         if @enable_metrics
-          @metrics[:quota_filtered].increment(labels: @base_labels.merge("quota" => quota.name))
+          @metrics[:quota_filtered].increment(by: 1, labels: @base_labels.merge({quota: quota.name}))
         end
         record
       else
@@ -120,7 +120,7 @@ module Fluent::Plugin
       if @registry.exist?(name)
         @registry.get(name)
       else
-        @registry.counter(name, docstring: docstring, base_labels: @base_labels.keys + ["quota"])
+        @registry.counter(name, docstring: docstring, labels: @base_labels.keys + ["quota"].map(&:to_sym))
       end
     end
   end
