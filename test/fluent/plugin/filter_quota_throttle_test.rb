@@ -10,7 +10,7 @@ class QuotaThrottleFilterTest < Minitest::Test
   CONFIG = %[
     path test/config_files/filter_plugin_test.yml
     warning_delay 2m
-    enable_metrics true
+    enable_metrics false
   ]
 
   def create_driver(conf = CONFIG)
@@ -38,7 +38,8 @@ class QuotaThrottleFilterTest < Minitest::Test
   end
 
   def test_metrics
-    d = create_driver
+    modified_config = CONFIG.sub("enable_metrics false", "enable_metrics true")
+    d = create_driver(modified_config)
     d.run(default_tag: 'test') do
       10.times do
         d.feed("group1" => { "a" => "value1" , "b" => "value2" })
