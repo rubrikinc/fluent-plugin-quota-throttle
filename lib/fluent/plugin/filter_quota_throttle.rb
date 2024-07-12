@@ -29,6 +29,7 @@ module Fluent::Plugin
       super
       @reemit_tag_prefix = "secondary"
       @registry = ::Prometheus::Client.registry
+      @placeholder_expander_builder = Fluent::Plugin::Prometheus.placeholder_expander(log)
     end
 
     # Configures the plugin
@@ -41,15 +42,7 @@ module Fluent::Plugin
       @config = ConfigParser::Configuration.new(@path)
       @match_helper = Matcher::MatchHelper.new(@config.quotas, @config.default_quota)
       if @enable_metrics
-        expander_builder = Fluent::Plugin::Prometheus.placeholder_expander(log)
-        expander = expander_builder.build({})
         @base_labels = parse_labels_elements(conf)
-        @base_labels.each do |key, value|
-          unless value.is_a?(String)
-            raise Fluent::ConfigError, "record accessor syntax is not available in metric labels for quota throttle plugin"
-          end
-          @base_labels[key] = expander.expand(value)
-        end
       end
     end
 
@@ -80,14 +73,16 @@ module Fluent::Plugin
       quota = @match_helper.get_quota(record)
       group = quota.group_by.map { |key| record.dig(*key) }
       bucket = @bucket_store.get_bucket(group, quota)
+      labels = {}
       if @enable_metrics
-        @metrics[:quota_input].increment(by: 1, labels: @base_labels.merge({quota: quota.name}))
+        labels = get_labels(record)
+        @metrics[:quota_input].increment(by: 1, labels: labels.merge({quota: quota.name}))
       end
       if bucket.allow
         record
       else
         if @enable_metrics
-          @metrics[:quota_exceeded].increment(by: 1, labels: @base_labels.merge({quota: quota.name}))
+          @metrics[:quota_exceeded].increment(by: 1, labels: labels.merge({quota: quota.name}))
         end
         quota_breached(tag, time, record, bucket, quota)
         nil
@@ -116,6 +111,19 @@ module Fluent::Plugin
       end
     end
 
+    def get_labels(record)
+      placeholders = stringify_keys(record)
+      expander = @placeholder_expander_builder.build(placeholders)
+      labels = {}
+      @base_labels.each do |key, value|
+        if value.is_a?(String)
+          labels[key] = expander.expand(value)
+        else
+          labels[key] = value.call(record)
+        end
+      end
+      labels
+    end
     def get_counter(name, docstring)
       if @registry.exist?(name)
         @registry.get(name)
