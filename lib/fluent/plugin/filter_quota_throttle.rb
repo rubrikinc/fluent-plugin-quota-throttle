@@ -124,12 +124,13 @@ module Fluent::Plugin
       @base_labels.each do |key, value|
         if value.is_a?(String)
           labels[key] = expander.expand(value)
-        else
+        elsif value.respond_to?(:call)
           labels[key] = value.call(record)
         end
       end
       labels
     end
+    
     def get_counter(name, docstring)
       if @registry.exist?(name)
         @registry.get(name)
