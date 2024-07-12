@@ -59,6 +59,12 @@ module Fluent::Plugin
 
     def shutdown
       super
+      if @enable_metrics
+        log.info "Clearing Counters"
+        @metrics.each do |name, metric|
+          @registry.unregister(name)
+        end
+      end
       log.info "Shutting down"
     end
 
