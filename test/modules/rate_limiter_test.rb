@@ -46,7 +46,7 @@ end
 class TestBucketStore < Minitest::Test
   def setup
     @bucket_store = RateLimiter::BucketStore.new
-    @quota = ConfigParser::Quota.new("Dummy", "dummy quota for testing",[["group1","a"],["group1","b"]], {["group1","a"] => "value1"}, 10, 2, "reemit")
+    @quota = ConfigParser::Quota.new("Dummy", "dummy quota for testing",[["group1","a"],["group1","b"]], {["group1","a"] => "value1"}, 10, "2s", "reemit")
   end
 
   def test_get_bucket
