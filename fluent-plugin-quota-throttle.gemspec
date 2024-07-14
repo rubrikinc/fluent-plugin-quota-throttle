@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "fluent-plugin-quota-throttle"
-  spec.version       = "0.0.1"
+  spec.version       = "0.0.2"
   spec.authors       = ["Athish Pranav D", "Dipendra Singh", "Rubrik Inc."]
   spec.email         = ["athish.pranav@rubrik.com", "Dipendra.Singh@rubrik.com"]
   spec.summary       = %q{Fluentd filter for throttling logs based on a configurable quotas.}
