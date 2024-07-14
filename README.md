@@ -1,6 +1,6 @@
 # fluent-plugin-quota-throttle
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/rubrikinc/fluent-plugin-throttle/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/rubrikinc/fluent-plugin-throttle/blob/master/LICENSE) ![Rake Test](https://github.com/rubrikinc/fluent-plugin-quota-throttle/actions/workflows/ruby.yml/badge.svg)
 
 A sentry plugin to throttle logs based on well defined quotas. Logs are grouped by configurable keys. When
 a group exceeds a configuration rate, logs are dropped for this group.
