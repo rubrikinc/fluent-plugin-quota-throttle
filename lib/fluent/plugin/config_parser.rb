@@ -24,7 +24,7 @@ module ConfigParser
       raise "Name cannot be empty" if name.nil?
       raise "Group by cannot be empty" if group_by.nil?
       raise "Bucket size cannot be empty" unless bucket_size.is_a?(Integer)
-      raise "Duration cannot be empty and must be string" unless duration.is_a?(String)
+      raise "Duration must be time delta (eg. 2s, 4m)" if duration.nil? || !duration.is_a?(String) || duration.strip.empty?
       raise "Action must be one of #{@@allowed_actions}" unless @@allowed_actions.include?action
       @name = name
       @desc = desc
