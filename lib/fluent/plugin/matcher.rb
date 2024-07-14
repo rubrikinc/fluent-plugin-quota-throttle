@@ -24,6 +24,9 @@ module Matcher
 
       max_score = 0
       quota_to_return = @default_quota
+      if @quotas.nil?
+        return @default_quota
+      end
       @quotas.each do |quota|
         score = matching_score(quota.match_by, record)
         if score > max_score
