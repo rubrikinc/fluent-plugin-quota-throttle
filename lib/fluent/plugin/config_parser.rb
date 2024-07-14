@@ -1,5 +1,5 @@
 require 'yaml'
-
+require 'fluent/config'
 ##
 # ConfigParser module contains classes to parse the configuration file and store the quotas
 module ConfigParser
@@ -24,14 +24,14 @@ module ConfigParser
       raise "Name cannot be empty" if name.nil?
       raise "Group by cannot be empty" if group_by.nil?
       raise "Bucket size cannot be empty" unless bucket_size.is_a?(Integer)
-      raise "Duration cannot be empty" unless duration.is_a?(Integer)
+      raise "Duration must be time delta (eg. 2s, 4m)" if duration.nil? || !duration.is_a?(String) || duration.strip.empty?
       raise "Action must be one of #{@@allowed_actions}" unless @@allowed_actions.include?action
       @name = name
       @desc = desc
       @group_by = group_by
       @match_by = match_by
       @bucket_size = bucket_size
-      @duration = duration
+      @duration = Fluent::Config.time_value(duration)
       @action = action
     end
   end

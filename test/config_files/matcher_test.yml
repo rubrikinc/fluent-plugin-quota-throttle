@@ -6,7 +6,7 @@ quotas:
   match_by:
     group1.a: value1
   bucket_size: 100
-  duration: 60
+  duration: 60s
   action: drop
 - name: quota2
   description: second quota
@@ -17,7 +17,7 @@ quotas:
     group1.a: value2
     group1.b: value3
   bucket_size: 200
-  duration: 120
+  duration: 120s
   action: reemit
 - name: quota3
   description: third quota
@@ -28,12 +28,12 @@ quotas:
       group2: value2
       group3: value3
   bucket_size: 300
-  duration: 180
+  duration: 180s
   action: drop
 default:
   description: default quota
   group_by:
     - group1.a
   bucket_size: 300
-  duration: 180
+  duration: 180s
   action: reemit

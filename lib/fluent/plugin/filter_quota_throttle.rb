@@ -39,8 +39,8 @@ module Fluent::Plugin
         if @path.nil? or !File.exist?(@path)
       raise "Warning delay should be non negative" \
         if @warning_delay < 0
-      @config = ConfigParser::Configuration.new(@path)
-      @match_helper = Matcher::MatchHelper.new(@config.quotas, @config.default_quota)
+      parsed_config = ConfigParser::Configuration.new(@path)
+      @match_helper = Matcher::MatchHelper.new(parsed_config.quotas, parsed_config.default_quota)
       if @enable_metrics
         @base_labels = parse_labels_elements(conf)
       end
