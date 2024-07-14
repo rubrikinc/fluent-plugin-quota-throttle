@@ -1,0 +1,24 @@
+default:
+  action: drop
+  bucket_size: 6
+  duration: 5
+  group_by:
+    - "user_id"
+
+quotas:
+  - name: "Quota1"
+    action: reemit
+    bucket_size: 8
+    duration: 5
+    group_by:
+      - "user_id"
+    match_by:
+      user_id: "user1"
+  - name: "Quota2"
+    action: drop
+    bucket_size: 5
+    duration: 5
+    group_by:
+      - "user_id"
+    match_by:
+      user_id: "user2"
