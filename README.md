@@ -7,18 +7,18 @@ a group exceeds a configuration rate, logs are dropped for this group.
 
 ## Installation
 
-TBD once the plugin is published
+install with `gem` or td-agent provided command as:
 
-[//]: # (install with `gem` or td-agent provided command as:)
 
-[//]: # ()
-[//]: # (```bash)
+```bash
 
-[//]: # (# for fluentd)
+# for fluentd
 
-[//]: # ($ gem install fluent-plugin-quota-throttle)
+$ gem install fluent-plugin-quota-throttle
+[OR]
+$ fluent-gem install fluent-plugin-quota-throttle
 
-[//]: # (```)
+```
 
 ## Configuration
 
