@@ -78,7 +78,7 @@ This is the period of of time over which `bucket_size` applies. This should be g
 
 Either `drop` or `reemit`.
 
-When a group exceeds its rate limit, logs are either dropped or re-emitted with a new tag `<tag>.secondary`
+When a group exceeds its rate limit, logs are either dropped or re-emitted with a new tag `secondary.<tag>`
 
 
 
@@ -96,7 +96,7 @@ the delay between every repetition.
 <filter **>
   @type quota_throttle
   @path /etc/fluentd/quota_throttle.yaml
-  @warning_delay 30
+  @warning_delay 30s
 </filter>
 ```
 ```yaml
@@ -108,7 +108,7 @@ quotas:
   match_by:
     group1.a: value1
   bucket_size: 100
-  duration: 60
+  duration: 60s
   action: drop
 - name: quota2
   description: second quota
@@ -119,7 +119,7 @@ quotas:
     group1.a: value2
     group1.b: value3
   bucket_size: 200
-  duration: 120
+  duration: 2m
   action: reemit
 - name: quota3
   description: third quota
@@ -137,7 +137,7 @@ default:
   group_by:
     - group1.a
   bucket_size: 300
-  duration: 180
+  duration: 3m
   action: reemit
 ```
 
