@@ -130,7 +130,7 @@ quotas:
       group2: value2
       group3: value3
   bucket_size: 300
-  duration: 180
+  duration: 180s
   action: drop
 default:
   description: default quota
