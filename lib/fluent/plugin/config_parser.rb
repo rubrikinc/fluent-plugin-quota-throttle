@@ -69,6 +69,7 @@ module ConfigParser
       else
         @default_quota = Quota.new("default", "Default quota", [], [], -1, 0, "drop")
       end
+      nil
     end
   end
 end

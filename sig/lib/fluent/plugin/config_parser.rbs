@@ -1,0 +1,71 @@
+#
+# ConfigParser module contains classes to parse the configuration file and store the quotas
+module ConfigParser
+  #
+  # Quota class represents a single quota configuration
+  # Attributes:
+  #   +name+: (String) The name of the quota.
+  #   +desc+: (String) A description of the quota.
+  #   +group_by+: (Array of Arrays of Strings) Specifies how to group transactions or events for quota tracking.
+  #   +match_by+: (Hash) Defines the conditions that must be met for the quota to apply. Keys are the conditions to match, and values are the expected values.
+  #   +bucket_size+: (Integer) The size of the quota bucket, indicating how many transactions or events can occur before the quota is exceeded. A value of -1 indicates no quota limit.
+  #   +duration+: (Integer) The duration (in seconds) for which the quota bucket size is valid.
+  #   +action+: (String) The action to take when the quota is reached. Must be one of the predefined actions in @@allowed_actions.
+  class Quota
+    @@allowed_actions: untyped
+
+    @name: String
+
+    @desc: String
+
+    @group_by: Array[Array[String]]
+
+    @match_by: Hash[String, String]
+
+    @bucket_size: Integer
+
+    @duration: String
+
+    @action: String
+
+    attr_reader name: String
+
+    attr_reader desc: String
+
+    attr_reader group_by: Array[Array[String]]
+
+    attr_reader match_by: Hash[String, String]
+
+    attr_reader bucket_size: Integer
+
+    attr_reader duration: String
+
+    attr_reader action: String
+
+    def initialize: (String name, String desc, Array[Array[String]] group_by, Hash[String, String] match_by, Integer bucket_size, String duration, String action) -> void
+  end
+
+  #
+  # Configuration class parses the configuration file and stores the quotas
+  # Attributes:
+  #   +quotas+: (Array of Quota) The list of quotas parsed from the configuration file.
+  #   +default_quota+: (Quota) The default quota to use when no other quota matches.
+  class Configuration
+    @config_file: String
+
+    @quotas: Array[Quota]
+
+    @default_quota: Quota
+
+    attr_reader quotas: Array[Quota]
+
+    attr_reader default_quota: Quota
+
+    def initialize: (String config_file_path) -> void
+
+    private
+
+    # Parses the quotas from the configuration file into Quota objects and stores them in @quotas
+    def parse_quotas: () -> nil
+  end
+end
