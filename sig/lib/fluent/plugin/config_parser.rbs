@@ -12,7 +12,7 @@ module ConfigParser
   #   +duration+: (Integer) The duration (in seconds) for which the quota bucket size is valid.
   #   +action+: (String) The action to take when the quota is reached. Must be one of the predefined actions in @@allowed_actions.
   class Quota
-    @@allowed_actions: untyped
+    @@allowed_actions: Set[String]
 
     @name: String
 
@@ -24,7 +24,7 @@ module ConfigParser
 
     @bucket_size: Integer
 
-    @duration: String
+    @duration: Integer
 
     @action: String
 
@@ -38,7 +38,7 @@ module ConfigParser
 
     attr_reader bucket_size: Integer
 
-    attr_reader duration: String
+    attr_reader duration: Integer
 
     attr_reader action: String
 
@@ -66,6 +66,6 @@ module ConfigParser
     private
 
     # Parses the quotas from the configuration file into Quota objects and stores them in @quotas
-    def parse_quotas: () -> nil
+    def parse_quotas: () -> void
   end
 end

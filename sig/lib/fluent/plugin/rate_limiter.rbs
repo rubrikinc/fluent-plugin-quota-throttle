@@ -1,0 +1,100 @@
+#
+# Rate Limiter module, contains the rate limiting logic
+module RateLimiter
+  #
+  # Bucket class, contains the rate limiting logic for each group
+  # Attributes:
+  #   +bucket_count+: Number of requests in the bucket
+  #   +bucket_last_reset+: Time when the bucket was last reset
+  #   +approx_rate_per_second+: Approximate rate of requests per second
+  #   +rate_last_reset+: Time when the rate was last reset
+  #   +curr_count+: Number of requests in the current second
+  #   +last_warning+: Time when the last warning was issued
+  #   +timeout_s+: Timeout for the bucket
+  #   +bucket_limit+: Maximum number of requests allowed in the bucket
+  #   +bucket_period+: Time period for the bucket
+  #   +rate_limit+: Maximum number of requests allowed per second
+  class Bucket
+    @group: untyped
+
+    @bucket_count: Integer
+
+    @bucket_last_reset: Time
+
+    @approx_rate_per_second: Integer
+
+    @rate_last_reset: Time
+
+    @curr_count: Integer
+
+    @last_warning: Time
+
+    @bucket_limit: Integer
+
+    @bucket_period: Integer
+
+    @rate_limit: Integer
+
+    @timeout_s: Integer
+
+    attr_accessor bucket_count: Integer
+
+    attr_accessor bucket_last_reset: Time
+
+    attr_accessor approx_rate_per_second: Integer
+
+    attr_accessor rate_last_reset: Time
+
+    attr_accessor curr_count: Integer
+
+    attr_accessor last_warning: Time
+
+    attr_reader bucket_limit: Integer
+
+    attr_reader bucket_period: Integer
+
+    attr_reader rate_limit: Integer
+
+    attr_reader timeout_s: Integer
+
+    attr_reader group: untyped
+
+    def initialize: (untyped group, Integer bucket_limit, Integer bucket_period) -> void
+
+    # Checks if the bucket is free or full
+    # Returns:
+    #   +true+ if the bucket is free
+    #   +false+ if the bucket is full
+    def allow: () -> bool
+
+    # Checks if bucket is expired
+    # Returns:
+    #   +true+ if the bucket is expired
+    #   +false+ if the bucket is not expired
+    def expired: () -> bool
+
+    private
+
+    # Resets the bucket when the window moves to the next time period
+    def reset_bucket: () -> void
+  end
+
+  #
+  # BucketStore class, organizes the all the group buckets
+  # Attributes:
+  #   +buckets+: Hash containing all the group buckets
+  class BucketStore
+    @buckets: Hash[untyped, Bucket]
+
+    def initialize: () -> void
+
+    # Gets the bucket for the group
+    # Arguments:
+    #   +group+: Group for which the bucket is required
+    #   +quota+: Quota object containing the bucket size and duration
+    def get_bucket: (untyped group, ConfigParser::Quota quota) -> Bucket
+
+    # Cleans the buckets that have expired
+    def clean_buckets: () -> void
+  end
+end
