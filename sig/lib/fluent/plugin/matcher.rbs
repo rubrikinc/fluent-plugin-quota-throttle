@@ -1,0 +1,32 @@
+#
+# This module is responsible for matching records to quotas.
+module Matcher
+  #
+  # MatchHelper class is responsible for matching records to quotas.
+  # Methods:
+  #   +get_quota+: Takes a list of keys and returns the quota that maximally matches
+  #   +matching_score+: Calculates the matching score between two hashes.
+  class MatchHelper
+    @quotas: Array[ConfigParser::Quota]
+
+    @default_quota: ConfigParser::Quota
+
+    def initialize: (Array[ConfigParser::Quota] processed_quotas, ConfigParser::Quota default_quota) -> void
+
+    # Takes a list of keys and returns the quota that maximally matches
+    # If no quota matches, returns the default quota
+    # Params:
+    #   +record+: (Hash) A hash of keys and values to match against the quotas
+    # Returns:
+    #   +quota+: (Quota Class)The quota that maximally matches the record
+    def get_quota: (Hash[String, untyped] record) -> ConfigParser::Quota
+
+    private
+
+    # Calculates the matching score between two hashes.
+    # Params:
+    #   +match+: (Hash) A hash of keys and values to match against the record
+    #   +record+: (Hash) A hash of keys and values to match against the match
+    def matching_score: (Hash[String, untyped] match, Hash[String, untyped] record) -> Integer
+  end
+end
