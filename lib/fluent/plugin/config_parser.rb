@@ -16,7 +16,7 @@ module ConfigParser
   #   +action+: (String) The action to take when the quota is reached. Must be one of the predefined actions in @@allowed_actions.
   class Quota
 
-    attr_accessor :name, :desc, :group_by, :match_by, :bucket_size, :duration, :action
+    attr_reader :name, :desc, :group_by, :match_by, :bucket_size, :duration, :action
 
     @@allowed_actions = Set["drop", "reemit"]
 
