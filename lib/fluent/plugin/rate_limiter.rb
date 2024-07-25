@@ -99,7 +99,7 @@ module RateLimiter
     #   +group+: Group for which the bucket is required
     #   +quota+: Quota object containing the bucket size and duration
     def get_bucket(group, quota)
-      @buckets[group] = @buckets.delete(group) || Bucket.new( group, quota.bucket_size, quota.duration)
+      @buckets[[group, quota.name]] = @buckets.delete([group, quota.name]) || Bucket.new( group, quota.bucket_size, quota.duration)
     end
 
     # Cleans the buckets that have expired
