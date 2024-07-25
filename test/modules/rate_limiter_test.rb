@@ -27,6 +27,8 @@ class TestBucket < Minitest::Test
   def test_bucket_allow_full
     11.times { @bucket.allow }
     assert_equal false, @bucket.allow
+    assert_equal -1, @bucket.bucket_count
+    assert_equal 12, @bucket.bucket_count_total
   end
 
   def test_reset_bucket
