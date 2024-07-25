@@ -5,7 +5,9 @@ module RateLimiter
   ##
   # Bucket class, contains the rate limiting logic for each group
   # Attributes:
+  #   +group+: Group for which the bucket is created
   #   +bucket_count+: Number of requests in the bucket
+  #   +bucket_count_total+: Number of requests in the bucket including the dropped requests
   #   +bucket_last_reset+: Time when the bucket was last reset
   #   +approx_rate_per_second+: Approximate rate of requests per second
   #   +rate_last_reset+: Time when the rate was last reset
@@ -16,12 +18,13 @@ module RateLimiter
   #   +bucket_period+: Time period for the bucket
   #   +rate_limit+: Maximum number of requests allowed per second
   class Bucket
-    attr_accessor :bucket_count, :bucket_last_reset, :approx_rate_per_second, :rate_last_reset, :curr_count, :last_warning
+    attr_accessor :bucket_count, :bucket_count_total, :bucket_last_reset, :approx_rate_per_second, :rate_last_reset, :curr_count, :last_warning
     attr_reader :bucket_limit, :bucket_period, :rate_limit, :timeout_s, :group
     def initialize( group, bucket_limit, bucket_period)
       now = Time.now
       @group = group
       @bucket_count = 0
+      @bucket_count_total = 0
       @bucket_last_reset = now
       @approx_rate_per_second = 0
       @rate_last_reset = now
@@ -43,6 +46,7 @@ module RateLimiter
       end
       now = Time.now
       @curr_count += 1
+      @bucket_count_total += 1
       time_lapsed = now - @rate_last_reset
 
       if time_lapsed.to_i >= 1
@@ -80,6 +84,7 @@ module RateLimiter
       now = Time.now
       unless @bucket_count == -1 && @approx_rate_per_second > @rate_limit
         @bucket_count = 0
+        @bucket_count_total = 0
         @bucket_last_reset = now
       end
     end
@@ -99,7 +104,7 @@ module RateLimiter
     #   +group+: Group for which the bucket is required
     #   +quota+: Quota object containing the bucket size and duration
     def get_bucket(group, quota)
-      @buckets[group] = @buckets.delete(group) || Bucket.new( group, quota.bucket_size, quota.duration)
+      @buckets[[group, quota.name]] = @buckets.delete([group, quota.name]) || Bucket.new( group, quota.bucket_size, quota.duration)
     end
 
     # Cleans the buckets that have expired

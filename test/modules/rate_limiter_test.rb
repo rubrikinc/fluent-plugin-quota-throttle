@@ -27,6 +27,8 @@ class TestBucket < Minitest::Test
   def test_bucket_allow_full
     11.times { @bucket.allow }
     assert_equal false, @bucket.allow
+    assert_equal -1, @bucket.bucket_count
+    assert_equal 12, @bucket.bucket_count_total
   end
 
   def test_reset_bucket
@@ -63,10 +65,10 @@ class TestBucketStore < Minitest::Test
     group2 = "value2"
     @bucket_store.get_bucket(group2, @quota)
     lru_group, lru_counter = @bucket_store.instance_variable_get(:@buckets).first
-    assert_equal group1, lru_group
+    assert_equal [group1, @quota.name], lru_group
     sleep(5)
     @bucket_store.clean_buckets
     lru_group, lru_counter = @bucket_store.instance_variable_get(:@buckets).first
-    assert_equal group2, lru_group
+    assert_equal [group2, @quota.name], lru_group
   end
 end
