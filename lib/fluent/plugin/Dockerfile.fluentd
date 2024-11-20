@@ -1,0 +1,35 @@
+# Fluentd with custom plugin Dockerfile - Dockerfile.fluentd
+#FROM fluent/fluentd:latest
+FROM fluent/fluentd:v1.17.0-1.0
+# FROM fluent/fluentd:v1.17.0-debian-amd64-1.0
+
+USER root
+
+RUN apk update && \
+    apk add --no-cache \
+      --virtual .build-deps \
+      sudo \
+      build-base \
+      linux-headers \
+      ruby \
+      ruby-dev \
+      curl \
+      musl-dev && \
+      apk upgrade
+
+# Install required gems
+RUN gem install fluent-plugin-prometheus:2.1.0 redis:4.8.1 fluentd:1.16.6
+
+# Create directories for configuration and plugin
+RUN mkdir -p /fluentd/config /fluentd/plugins
+
+# Copy Fluentd configuration and custom plugin
+COPY fluent.conf /fluentd/config/fluent.conf
+COPY fluent-plugin-dedupe-with-redis-0.0.5.gem /fluentd/plugins/fluent-plugin-dedupe-with-redis-0.0.5.gem
+
+# Install the plugin gem
+RUN gem install /fluentd/plugins/fluent-plugin-dedupe-with-redis-0.0.5.gem # fluent-plugin-dedupe-with-redis 
+
+# USER fluent
+# CMD fluentd -c /fluentd/config/fluent.conf
+CMD ["sh"]

@@ -2,7 +2,7 @@ require 'bundler/setup'
 require 'single_cov'
 
 SingleCov.setup :minitest
-
+#
 require 'fluent/test'
 require 'fluent/test/driver/input'
 require 'fluent/test/driver/filter'
@@ -12,5 +12,5 @@ require 'fluent/test/helpers'
 # require 'mocha/minitest'
 require 'mocha/test_unit'
 require 'test/unit'
-require 'redis'
-require_relative '../lib/fluent/plugin/filter_dedupe_with_redis'
+
+Test::Unit::TestCase.include(Fluent::Test::Helpers)
