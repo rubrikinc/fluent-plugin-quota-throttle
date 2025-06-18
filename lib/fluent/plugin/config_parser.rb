@@ -14,13 +14,14 @@ module ConfigParser
   #   +bucket_size+: (Integer) The size of the quota bucket, indicating how many transactions or events can occur before the quota is exceeded. A value of -1 indicates no quota limit.
   #   +duration+: (Integer) The duration (in seconds) for which the quota bucket size is valid.
   #   +action+: (String) The action to take when the quota is reached. Must be one of the predefined actions in @@allowed_actions.
+  #   +use_approx_rate+: (Boolean) Whether to use approximate rate for throttling
   class Quota
 
-    attr_reader :name, :desc, :group_by, :match_by, :bucket_size, :duration, :action
+    attr_reader :name, :desc, :group_by, :match_by, :bucket_size, :duration, :action, :use_approx_rate
 
     @@allowed_actions = Set["drop", "reemit"]
 
-    def initialize(name, desc, group_by, match_by, bucket_size, duration, action)
+    def initialize(name, desc, group_by, match_by, bucket_size, duration, action, use_approx_rate=false)
       raise "Name cannot be empty" if name.nil?
       raise "Group by cannot be empty" if group_by.nil?
       raise "Bucket size cannot be empty" unless bucket_size.is_a?(Integer)
@@ -33,6 +34,7 @@ module ConfigParser
       @bucket_size = bucket_size
       @duration = Fluent::Config.time_value(duration)
       @action = action
+      @use_approx_rate = use_approx_rate
     end
   end
 
@@ -60,14 +62,16 @@ module ConfigParser
         @quotas = @config_file["quotas"].map do |quota|
           group_key = quota["group_by"].map { |key| key.split(".") }
           match_by = quota["match_by"].map { |key,value| [key.split(".") , value] }.to_h
-          Quota.new(quota["name"], quota["description"], group_key, match_by, quota["bucket_size"], quota["duration"], quota["action"])
+          use_approx_rate = quota["use_approx_rate"] || false
+          Quota.new(quota["name"], quota["description"], group_key, match_by, quota["bucket_size"], quota["duration"], quota["action"], use_approx_rate)
         end
       end
       if @config_file.has_key?("default")
         default_quota_config = @config_file["default"]
-        @default_quota = Quota.new("default", default_quota_config["description"], default_quota_config["group_by"].map { |key| key.split(".") }, [], default_quota_config["bucket_size"], default_quota_config["duration"], default_quota_config["action"])
+        use_approx_rate = default_quota_config["use_approx_rate"] || false
+        @default_quota = Quota.new("default", default_quota_config["description"], default_quota_config["group_by"].map { |key| key.split(".") }, [], default_quota_config["bucket_size"], default_quota_config["duration"], default_quota_config["action"], use_approx_rate)
       else
-        @default_quota = Quota.new("default", "Default quota", [], [], -1, 0, "drop")
+        @default_quota = Quota.new("default", "Default quota", [], [], -1, 0, "drop", false)
       end
     end
   end

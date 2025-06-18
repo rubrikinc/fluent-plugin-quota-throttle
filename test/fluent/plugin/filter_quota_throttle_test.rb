@@ -34,7 +34,7 @@ class QuotaThrottleFilterTest < Minitest::Test
       end
     end
     events = d.filtered_records
-    assert_equal 23, events.length
+    assert_equal 19, events.length
   end
 
   # Due to the way the Driver is implemented, both metrics tests cannot be same time because the registry of metrics is not cleared between tests
@@ -74,12 +74,72 @@ class QuotaThrottleFilterTest < Minitest::Test
       end
     end
     assert_equal 10, d.instance.registry.get(:fluentd_quota_throttle_input).get(labels: {source: "value1", quota: 'quota1', dummy: 'd1'})
-    assert_equal 4, d.instance.registry.get(:fluentd_quota_throttle_exceeded).get(labels: {source: "value1", quota: 'quota1', dummy: 'd1'})
+    assert_equal 5, d.instance.registry.get(:fluentd_quota_throttle_exceeded).get(labels: {source: "value1", quota: 'quota1', dummy: 'd1'})
     assert_equal 10, d.instance.registry.get(:fluentd_quota_throttle_input).get(labels: {source: "value2", quota: 'quota2', dummy: 'd1'})
-    assert_equal 3, d.instance.registry.get(:fluentd_quota_throttle_exceeded).get(labels: {source: "value2", quota: 'quota2', dummy: 'd1'})
+    assert_equal 4, d.instance.registry.get(:fluentd_quota_throttle_exceeded).get(labels: {source: "value2", quota: 'quota2', dummy: 'd1'})
     assert_equal 10, d.instance.registry.get(:fluentd_quota_throttle_input).get(labels: {source: "value2", quota: 'default', dummy: 'd1'})
-    assert_equal 5, d.instance.registry.get(:fluentd_quota_throttle_exceeded).get(labels: {source: "value2", quota: 'default', dummy: 'd1'})
+    assert_equal 6, d.instance.registry.get(:fluentd_quota_throttle_exceeded).get(labels: {source: "value2", quota: 'default', dummy: 'd1'})
     assert_equal 10, d.instance.registry.get(:fluentd_quota_throttle_input).get(labels: {source: "value3", quota: 'default', dummy: 'd1'})
-    assert_equal 5, d.instance.registry.get(:fluentd_quota_throttle_exceeded).get(labels: {source: "value3", quota: 'default', dummy: 'd1'})
+    assert_equal 6, d.instance.registry.get(:fluentd_quota_throttle_exceeded).get(labels: {source: "value3", quota: 'default', dummy: 'd1'})
+  end
+
+  def test_filter_without_approx_rate_throttling
+    # Use config with approx rate throttling disabled
+    config_without_throttling = %[
+      path test/config_files/filter_plugin_test.yml
+      warning_delay 2m
+      enable_metrics false
+    ]
+    
+    d = create_driver(config_without_throttling)
+    
+    # First batch - fill up the buckets
+    d.run(default_tag: 'test') do
+      # Send enough records to fill quota
+      100.times do
+        d.feed("group1" => { "a" => "value4", "b" => "value5" })
+      end
+      
+      # Sleep for longer than the bucket duration
+      sleep(10)
+      
+      # Send more records to fill quota
+      4.times do
+        d.feed("group1" => { "a" => "value4", "b" => "value5" })
+      end
+    end
+    
+    # Verify that quota is filled, as buckets are reset regardless of rate
+    assert_equal 9, d.filtered_records.length
+  end
+
+  def test_filter_with_approx_rate_throttling
+    # Use config with approx rate throttling enabled
+    config_without_throttling = %[
+      path test/config_files/filter_plugin_test.yml
+      warning_delay 2m
+      enable_metrics false
+    ]
+    
+    d = create_driver(config_without_throttling)
+    
+    # First batch - fill up the buckets
+    d.run(default_tag: 'test') do
+      # Send enough records to fill quota
+      100.times do
+        d.feed("group1" => { "a" => "value5", "b" => "value6" })
+      end
+      
+      # Sleep for longer than the bucket duration
+      sleep(10)
+      
+      # Send more records to fill quota
+      4.times do
+        d.feed("group1" => { "a" => "value5", "b" => "value6" })
+      end
+    end
+    
+    # Verify that quota is not filled, as buckets are not reset due to high rate
+    assert_equal 5, d.filtered_records.length
   end
 end
