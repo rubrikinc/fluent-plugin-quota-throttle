@@ -19,6 +19,29 @@ quotas:
     bucket_size: 6
     duration: 120s
     action: reemit
+  - name: quota3
+    description: third quota
+    group_by:
+      - group1.a
+      - group1.b
+    match_by:
+      group1.a: value4
+      group1.b: value5
+    bucket_size: 5
+    duration: 5s
+    action: drop
+  - name: quota4
+    description: fourth quota
+    group_by:
+      - group1.a
+      - group1.b
+    match_by:
+      group1.a: value5
+      group1.b: value6
+    bucket_size: 5
+    duration: 5s
+    action: drop
+    use_approx_rate: true
 default:
   description: default quota
   group_by:

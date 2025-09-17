@@ -17,10 +17,11 @@ module RateLimiter
   #   +bucket_limit+: Maximum number of requests allowed in the bucket
   #   +bucket_period+: Time period for the bucket
   #   +rate_limit+: Maximum number of requests allowed per second
+  #   +use_approx_rate_for_throttling+: Whether to use approximate rate for throttling
   class Bucket
     attr_accessor :bucket_count, :bucket_count_total, :bucket_last_reset, :approx_rate_per_second, :rate_last_reset, :curr_count, :last_warning
-    attr_reader :bucket_limit, :bucket_period, :rate_limit, :timeout_s, :group
-    def initialize( group, bucket_limit, bucket_period)
+    attr_reader :bucket_limit, :bucket_period, :rate_limit, :timeout_s, :group, :use_approx_rate_for_throttling
+    def initialize( group, bucket_limit, bucket_period, use_approx_rate_for_throttling=false)
       now = Time.now
       @group = group
       @bucket_count = 0
@@ -34,6 +35,7 @@ module RateLimiter
       @bucket_period = bucket_period
       @rate_limit = bucket_limit/bucket_period
       @timeout_s = 2*bucket_period
+      @use_approx_rate_for_throttling = use_approx_rate_for_throttling
     end
 
     # Checks if the bucket is free or full
@@ -59,12 +61,13 @@ module RateLimiter
         reset_bucket
       end
 
-      if @bucket_count == -1 or @bucket_count > @bucket_limit
+      # Check if the bucket is already marked as full (-1) or has reached its limit
+      if @bucket_count == -1 or @bucket_count >= @bucket_limit
         @bucket_count = -1
         return false
       else
         @bucket_count += 1
-        true
+        return true
       end
     end
 
@@ -74,7 +77,7 @@ module RateLimiter
     #   +false+ if the bucket is not expired
     def expired
       now = Time.now
-      now.to_i - @rate_last_reset.to_i > @timeout_s
+      now.to_i - @bucket_last_reset.to_i > @timeout_s
     end
 
     private
@@ -82,7 +85,9 @@ module RateLimiter
     # Resets the bucket when the window moves to the next time period
     def reset_bucket
       now = Time.now
-      unless @bucket_count == -1 && @approx_rate_per_second > @rate_limit
+      # If use_approx_rate_for_throttling is false, always reset the bucket
+      # Otherwise, only reset if either: bucket is not marked as full (-1) OR rate is not exceeding the limit
+      if !@use_approx_rate_for_throttling || !(@bucket_count == -1 && @approx_rate_per_second > @rate_limit)
         @bucket_count = 0
         @bucket_count_total = 0
         @bucket_last_reset = now
@@ -104,7 +109,7 @@ module RateLimiter
     #   +group+: Group for which the bucket is required
     #   +quota+: Quota object containing the bucket size and duration
     def get_bucket(group, quota)
-      @buckets[[group, quota.name]] = @buckets.delete([group, quota.name]) || Bucket.new( group, quota.bucket_size, quota.duration)
+      @buckets[[group, quota.name]] = @buckets.delete([group, quota.name]) || Bucket.new( group, quota.bucket_size, quota.duration, quota.use_approx_rate)
     end
 
     # Cleans the buckets that have expired
