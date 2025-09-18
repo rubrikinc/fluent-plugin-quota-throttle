@@ -42,6 +42,30 @@ quotas:
     duration: 5s
     action: drop
     use_approx_rate: true
+  - name: quota_fallback
+    description: quota with fallback
+    group_by:
+      - group1.a
+    match_by:
+      group1.a: value_fallback
+    bucket_size: 3
+    duration: 60s
+    action: fallback
+    fallback_quota:
+      bucket_size: 2
+      duration: 60s
+  - name: quota_fallback_2
+    description: second quota with fallback
+    group_by:
+      - group1.a
+    match_by:
+      group1.a: value_fallback_2
+    bucket_size: 2
+    duration: 60s
+    action: fallback
+    fallback_quota:
+      bucket_size: 1
+      duration: 60s
 default:
   description: default quota
   group_by:
