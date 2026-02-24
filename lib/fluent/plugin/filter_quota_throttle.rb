@@ -16,6 +16,8 @@ module Fluent::Plugin
     include Fluent::Plugin::Prometheus
     attr_reader :registry
 
+    THROTTLE_MESSAGE = "Throttling applied due to quota breach"
+
     desc "Path for the quota config file"
     config_param :path, :string, :default => nil
 
@@ -102,8 +104,17 @@ module Fluent::Plugin
         @metrics[:quota_exceeded].increment(by: 1, labels: labels.merge({quota: quota.name}))
       end
       
-      quota_breached(tag, time, record, bucket, quota)
-      nil
+      should_emit_once = quota_breached(tag, time, record, bucket, quota)
+      if should_emit_once
+        if record.key?("msg")
+          record["msg"] = THROTTLE_MESSAGE
+        elsif record.key?("log")
+          record["log"] = THROTTLE_MESSAGE
+        end
+        return record
+      end
+      
+      return nil
 
     end
 
@@ -115,18 +126,24 @@ module Fluent::Plugin
     #   +quota+: (Quota) The quota that has been breached
     #   +timestamp+: (Time) The timestamp of the record
     def quota_breached(tag, timestamp, record, bucket, quota)
+      should_emit_once = false
       if bucket.last_warning.nil? || Time.now - bucket.last_warning > @warning_delay
         log.warn "Quota breached for {group: #{bucket.group}, quota: #{quota.name}, total_logs: #{bucket.bucket_count_total}, limit: #{bucket.bucket_limit}, current_rate: #{bucket.approx_rate_per_second}}"
         bucket.last_warning = Time.now
+        should_emit_once = true
       end
       case quota.action
       when "drop"
         log.debug "Dropping record"
       when "reemit"
-        log.debug "Reemitting record"
-        new_tag = "#{@reemit_tag_prefix}.#{tag}"
-        router.emit(new_tag, timestamp, record)
+        unless should_emit_once
+          log.debug "Reemitting record"
+          new_tag = "#{@reemit_tag_prefix}.#{tag}"
+          router.emit(new_tag, timestamp, record)
+        end
       end
+
+      return should_emit_once
     end
 
     def get_labels(record)
