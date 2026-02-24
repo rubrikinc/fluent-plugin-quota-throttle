@@ -19,6 +19,18 @@ quotas:
   bucket_size: 200
   duration: 120s
   action: reemit
+- name: quota3
+  description: third quota with fallback
+  group_by:
+  - group1.a
+  match_by:
+    group1.a: value3
+  bucket_size: 500
+  duration: 10m
+  action: fallback
+  fallback_quota:
+    bucket_size: 25
+    duration: 60s
 default:
   description: default quota
   group_by:

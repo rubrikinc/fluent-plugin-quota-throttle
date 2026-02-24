@@ -142,4 +142,77 @@ class QuotaThrottleFilterTest < Minitest::Test
     # Verify that quota is not filled, as buckets are not reset due to high rate
     assert_equal 5, d.filtered_records.length
   end
+
+  def test_fallback_quota_functionality
+    d = create_driver
+
+    # Test fallback quota behavior
+    d.run(default_tag: 'test') do
+      # Send records that match the fallback quota
+      # Primary quota allows 3 records, fallback allows 2 more
+      8.times do |i|
+        d.feed("group1" => { "a" => "value_fallback", "b" => "test_value" })
+      end
+    end
+
+    events = d.filtered_records
+
+    # Should allow 3 (primary) + 2 (fallback) = 5 records total
+    # The remaining 3 records should be dropped
+    assert_equal 5, events.length
+
+    # Verify all allowed records have the expected structure
+    events.each do |record|
+      assert_equal "value_fallback", record["group1"]["a"]
+      assert_equal "test_value", record["group1"]["b"]
+    end
+  end
+
+  def test_fallback_quota_with_different_groups
+    d = create_driver
+
+    # Test that fallback quota works correctly with truly different groups
+    d.run(default_tag: 'test') do
+      # Group 1: quota_fallback (3 primary + 2 fallback = 5 max)
+      # Send 6 records, expect 5 to pass
+      6.times do |i|
+        d.feed("group1" => { "a" => "value_fallback", "b" => "group_1_record_#{i}" })
+      end
+
+      # Group 2: quota_fallback_2 (2 primary + 1 fallback = 3 max)
+      # Send 4 records, expect 3 to pass
+      4.times do |i|
+        d.feed("group1" => { "a" => "value_fallback_2", "b" => "group_2_record_#{i}" })
+      end
+    end
+
+    events = d.filtered_records
+
+    # Total: 5 (from group 1) + 3 (from group 2) = 8 records
+    assert_equal 8, events.length
+
+    # Count records by group
+    group_1_count = events.count { |r| r["group1"]["a"] == "value_fallback" }
+    group_2_count = events.count { |r| r["group1"]["a"] == "value_fallback_2" }
+
+    assert_equal 5, group_1_count  # 3 primary + 2 fallback
+    assert_equal 3, group_2_count  # 2 primary + 1 fallback
+  end
+
+  def test_non_fallback_quota_behavior_unchanged
+    d = create_driver
+
+    # Test that non-fallback quotas still work as expected
+    d.run(default_tag: 'test') do
+      # Send records that match quota1 (drop action, bucket_size: 5)
+      10.times do
+        d.feed("group1" => { "a" => "value1", "b" => "test" })
+      end
+    end
+
+    events = d.filtered_records
+
+    # Should allow exactly 5 records (no fallback for quota1)
+    assert_equal 5, events.length
+  end
 end

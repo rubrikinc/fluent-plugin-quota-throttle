@@ -84,15 +84,27 @@ module Fluent::Plugin
         labels = get_labels(record)
         @metrics[:quota_input].increment(by: 1, labels: labels.merge({quota: quota.name}))
       end
-      if bucket.allow
-        record
-      else
-        if @enable_metrics
-          @metrics[:quota_exceeded].increment(by: 1, labels: labels.merge({quota: quota.name}))
-        end
-        quota_breached(tag, time, record, bucket, quota)
-        nil
+
+      # Check primary quota
+      return record if bucket.allow
+      
+      if quota.action == "fallback" && quota.fallback_quota
+        # Fallback quota will have a name as #{quota_name}_fbk
+        quota = quota.fallback_quota
+        group = group + [ConfigParser::Quota::FALLBACK_SUFFIX]
+        bucket = @bucket_store.get_bucket(group, quota)
+
+        # Check fallback quota
+        return record if bucket.allow
       end
+
+      if @enable_metrics
+        @metrics[:quota_exceeded].increment(by: 1, labels: labels.merge({quota: quota.name}))
+      end
+      
+      quota_breached(tag, time, record, bucket, quota)
+      nil
+
     end
 
     private

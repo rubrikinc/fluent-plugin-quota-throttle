@@ -17,24 +17,50 @@ module ConfigParser
   #   +use_approx_rate+: (Boolean) Whether to use approximate rate for throttling
   class Quota
 
-    attr_reader :name, :desc, :group_by, :match_by, :bucket_size, :duration, :action, :use_approx_rate
+    attr_reader :name, :desc, :group_by, :match_by, :bucket_size, :duration, :action, :use_approx_rate, :fallback_quota
 
-    @@allowed_actions = Set["drop", "reemit"]
+    @@allowed_actions = Set["drop", "reemit", "fallback"]
+    FALLBACK_SUFFIX = "fbk"
 
-    def initialize(name, desc, group_by, match_by, bucket_size, duration, action, use_approx_rate=false)
+    def initialize(name, desc, group_by, match_by, bucket_size, duration, action, use_approx_rate=false, fallback_quota=nil)
       raise "Name cannot be empty" if name.nil?
       raise "Group by cannot be empty" if group_by.nil?
-      raise "Bucket size cannot be empty" unless bucket_size.is_a?(Integer)
+      raise "Bucket size cannot be nil and must be an integer" if bucket_size.nil? || !bucket_size.is_a?(Integer)
       raise "Duration must be time delta (eg. 2s, 4m)" if duration.nil? || !duration.is_a?(String) || duration.strip.empty?
       raise "Action must be one of #{@@allowed_actions}" unless @@allowed_actions.include?action
+
+      # Validate fallback configuration
+      if action == "fallback"
+        raise "Fallback config cannot be nil when action is 'fallback'" if fallback_quota.nil?
+        raise "Fallback bucket_size cannot be nil and must be an integer" if fallback_quota["bucket_size"].nil? || !fallback_quota["bucket_size"].is_a?(Integer)
+        raise "Fallback duration must be time delta (eg. 2s, 4m)" if fallback_quota["duration"].nil? || !fallback_quota["duration"].is_a?(String) || fallback_quota["duration"].strip.empty?
+      end
+
       @name = name
       @desc = desc
       @group_by = group_by
       @match_by = match_by
       @bucket_size = bucket_size
       @duration = Fluent::Config.time_value(duration)
+      raise "Duration must be greater than 0, got: #{@duration}, input: #{duration}" if @duration <= 0
+
       @action = action
       @use_approx_rate = use_approx_rate
+      @fallback_quota = create_fallback_quota(fallback_quota) if fallback_quota
+    end
+
+    private
+
+    def create_fallback_quota(fallback_quota)
+      Quota.new(
+        "#{@name}_#{FALLBACK_SUFFIX}",
+        "Fallback for #{@desc}",
+        @group_by,
+        @match_by,
+        fallback_quota["bucket_size"],
+        fallback_quota["duration"],
+        "drop"
+      )
     end
   end
 
@@ -63,13 +89,13 @@ module ConfigParser
           group_key = quota["group_by"].map { |key| key.split(".") }
           match_by = quota["match_by"].map { |key,value| [key.split(".") , value] }.to_h
           use_approx_rate = quota["use_approx_rate"] || false
-          Quota.new(quota["name"], quota["description"], group_key, match_by, quota["bucket_size"], quota["duration"], quota["action"], use_approx_rate)
+          Quota.new(quota["name"], quota["description"], group_key, match_by, quota["bucket_size"], quota["duration"], quota["action"], use_approx_rate, quota["fallback_quota"])
         end
       end
       if @config_file.has_key?("default")
         default_quota_config = @config_file["default"]
         use_approx_rate = default_quota_config["use_approx_rate"] || false
-        @default_quota = Quota.new("default", default_quota_config["description"], default_quota_config["group_by"].map { |key| key.split(".") }, [], default_quota_config["bucket_size"], default_quota_config["duration"], default_quota_config["action"], use_approx_rate)
+        @default_quota = Quota.new("default", default_quota_config["description"], default_quota_config["group_by"].map { |key| key.split(".") }, [], default_quota_config["bucket_size"], default_quota_config["duration"], default_quota_config["action"], use_approx_rate, default_quota_config["fallback_quota"])
       else
         @default_quota = Quota.new("default", "Default quota", [], [], -1, 0, "drop", false)
       end
